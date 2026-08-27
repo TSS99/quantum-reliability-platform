@@ -102,3 +102,19 @@ model; `gpt-5.6` is the correct slug (config default is `gpt-5.5`, also valid).
 **Applies to:** architect, qem-sci, optimizer, backend, qa, visuals (all codex). Same bug class as the
 Claude friendly-name issue (ADR-0006).
 **Status:** Accepted.
+
+## ADR-0010 — 2026-08-27 — Codex non-functional here; all 6 codex roles → Claude (user-approved)
+**Decision:** Move all 6 codex-plan roles to Claude: Architect → `claude-opus-5`, QEM Sci →
+`claude-opus-5`, Optimizer → `claude-sonnet-5`, Backend → `claude-sonnet-5`, QA → `claude-sonnet-5`,
+Visuals → `claude-sonnet-5` (Visuals keeps the no-Claude-raster rule: briefs + SVG only). Whole floor is
+now Claude.
+**Evidence (definitive):** codex workers spawn and self-archive within ~2–8s with NO session, empty
+memory, empty outbox — across crowded AND empty floors, incl. a solo controlled test (worker-architect
+alone → died). `codex exec -m gpt-5.6` works when invoked directly, so the model/login is fine; the
+Munder Difflin app's codex worker integration does not establish sessions. Claude workers run normally —
+`worker-security` and `worker-ux-director` delivered full Phase-1 reviews; `worker-qec-sci` ran once the
+floor cleared.
+**Decision authority:** user chose "Run them on Claude" via AskUserQuestion (deliberate, not an
+ambiguous yes). Supersedes ADR-0008; re-affirms the substance of ADR-0007.
+**Also:** the floor caps concurrent worker sessions low (~3) — spawn in small batches, not all at once.
+**Status:** Accepted.
