@@ -7,8 +7,8 @@ from typing import Literal
 from pydantic import BaseModel, model_validator
 
 from app.domain.invariants import check_field_unit_suffixes, check_id_format
-from app.schemas.quantity import Quantity
 from app.domain.reason_codes import Finding
+from app.schemas.quantity import Quantity
 
 _QUANTITY_SUFFIX_FIELDS = ("t1_us", "t2_us", "measurement_time_us")
 

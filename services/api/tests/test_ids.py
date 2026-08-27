@@ -1,5 +1,6 @@
 """Deterministic IDs (MISSION §31/§33): same input => same id, reproducible across reloads."""
 import pytest
+
 from app.domain import ids
 from app.domain.invariants import check_id_format
 

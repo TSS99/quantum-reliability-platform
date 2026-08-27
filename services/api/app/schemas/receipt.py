@@ -11,10 +11,10 @@ from app.domain.invariants import (
     check_expectation_value,
     check_id_format,
 )
+from app.domain.reason_codes import Finding
 from app.schemas.common import StatisticalConfidence, StrategyConfidence
 from app.schemas.goal import ReliabilityGoal
 from app.schemas.quantity import Quantity
-from app.domain.reason_codes import Finding
 from app.schemas.run import ExecutionMode, Lineage
 from app.schemas.strategy import MitigationStrategy
 from app.schemas.workload import Observable

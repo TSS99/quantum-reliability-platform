@@ -10,9 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from app.domain.reason_codes import Finding, PreflightStatus, status_from
+from app.optimization.weights import weights_for
 from app.schemas.goal import ReliabilityGoal, ScoreWeights
 from app.schemas.plan import ScoreBreakdown, ScoreTerm
-from app.optimization.weights import weights_for
 
 NORMALIZATION_REF = "docs/API_CONTRACT.md#normalization"
 # Fixed documented upper bounds for normalising a raw metric to [0, 1] (0 = best, 1 = worst).
@@ -53,10 +53,6 @@ class OptimizeResult:
     preflight_summary: str
     explanation: str = ""
     infeasible: list[Scored] = field(default_factory=list)
-
-
-def _q(value: float) -> float:
-    return value
 
 
 def stage_a_findings(c: Candidate, goal: ReliabilityGoal) -> list[Finding]:

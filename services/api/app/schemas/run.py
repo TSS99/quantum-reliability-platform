@@ -11,9 +11,9 @@ from app.domain.invariants import (
     check_expectation_value,
     check_id_format,
 )
+from app.domain.reason_codes import Finding
 from app.schemas.common import StatisticalConfidence
 from app.schemas.quantity import Quantity
-from app.domain.reason_codes import Finding
 
 ExecutionMode = Literal["demo_replay", "local_simulation", "hardware"]
 
