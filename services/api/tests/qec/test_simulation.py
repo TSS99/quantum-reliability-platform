@@ -122,4 +122,7 @@ def test_surface_code_qubit_counts_match_the_generated_circuit():
     repetition = build_circuit(
         SimulationConfig(code="repetition", distance=3, noise_model="circuit_level", p=0.001)
     )
-    assert len(repetition.get_final_qubit_coordinates()) == 5
+    # The repetition generator emits dense indices and no QUBIT_COORDS, so there `num_qubits`
+    # (2d-1 = 5) is the right accessor. The two codes genuinely differ here.
+    assert repetition.num_qubits == 5
+    assert repetition.get_final_qubit_coordinates() == {}
