@@ -92,3 +92,13 @@ off a mis-scoped "yes"; the user wants the ChatGPT models kept.
 trading roster used them and codex agents spawned with them). If a codex agent shows a model-resolution
 failure like the Claude one did, god finds the exact codex slug then.
 **Status:** Accepted. ADR-0007 superseded. ADR-0006 (canonical Claude IDs + subscription auth) STANDS.
+
+## ADR-0009 — 2026-08-27 — Codex model slug is `gpt-5.6` (friendly "GPT-5.6 Sol/Terra" is invalid)
+**Decision:** Codex agents use model `gpt-5.6`. The friendly names "GPT-5.6 sol/terra" do NOT resolve —
+codex exited on launch, so every codex agent spawned and archived within ~2s with NO session, NO memory,
+NO output (verified: only Claude workers ever appear in the session log). Tested `codex exec -m gpt-5.6`
+and `-m gpt-5.5` directly — both return OK (exit 0). "sol/terra" are flavor labels with no distinct
+model; `gpt-5.6` is the correct slug (config default is `gpt-5.5`, also valid).
+**Applies to:** architect, qem-sci, optimizer, backend, qa, visuals (all codex). Same bug class as the
+Claude friendly-name issue (ADR-0006).
+**Status:** Accepted.
