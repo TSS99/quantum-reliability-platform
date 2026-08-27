@@ -13,32 +13,29 @@ the agent begins real work; before that it onboards and stands by (token-frugal)
 
 ## Model allocation summary
 
-**All agents run on the user's Claude subscription (first-party, no metered API, no codex/OpenAI).**
-Reasoning-critical roles → `claude-opus-5`; implementation/mechanical roles → `claude-sonnet-5`.
-Model strings MUST be canonical IDs (ADR-0006): `claude-opus-5`, `claude-sonnet-5`,
-`claude-haiku-4-5-20251001` — friendly names like "Opus 5" do NOT resolve.
+**Cross-provider by design (MISSION §5–§6), all on the user's own subscriptions — no metered API.**
+Claude agents run on the claude.ai first-party login; codex agents run on the ChatGPT login
+(`~/.codex/auth.json`, no `OPENAI_API_KEY`). Claude model strings MUST be canonical IDs (ADR-0006):
+`claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5-20251001` — friendly names like "Opus 5" do NOT
+resolve. Codex agents use the environment's GPT-5.6 model names.
 
-| Agent | Worker id | Provider | Model (canonical ID) | Escalation | Activates |
+| Agent | Worker id | Provider | Model | Fallback | Activates |
 |---|---|---|---|---|---|
 | Michael (GOD) | `god` | claude | Opus 4.8 [1M] (running) | — | Phase 0 (now) |
-| Architect | `worker-architect` | claude | **claude-opus-5** | — | Phase 1 |
-| QEM Scientist | `worker-qem-sci` | claude | **claude-opus-5** | — | Phase 1 |
-| QEC Scientist | `worker-qec-sci` | claude | **claude-opus-5** | — | Phase 1 |
-| UX Director | `worker-ux-director` | claude | **claude-opus-5** | — | Phase 1 |
-| Security | `worker-security` | claude | **claude-opus-5** | — | Phase 1 (light) / 9 (deep) |
-| Optimizer | `worker-optimizer` | claude | **claude-sonnet-5** | Opus 5 (scoring-model review via god) | Phase 1 |
-| Backend | `worker-backend` | claude | **claude-sonnet-5** | Opus 5 (hard modules via god) | Phase 3 |
-| Frontend | `worker-frontend` | claude | **claude-sonnet-5** | Opus 5 (major review via god) | Phase 4 |
-| QA | `worker-qa` | claude | **claude-sonnet-5** | — | Phase 2 (a11y) / 9 (main) |
+| Architect | `worker-architect` | codex | **GPT-5.6 sol** | claude-opus-5 | Phase 1 |
+| QEM Scientist | `worker-qem-sci` | codex | **GPT-5.6 sol** | claude-opus-5 | Phase 1 |
+| QEC Scientist | `worker-qec-sci` | claude | **claude-opus-5** | GPT-5.6 sol | Phase 1 |
+| UX Director | `worker-ux-director` | claude | **claude-opus-5** | claude-sonnet-5 | Phase 1 |
+| Optimizer | `worker-optimizer` | codex | **GPT-5.6 terra** | GPT-5.6 sol | Phase 1 |
+| Security | `worker-security` | claude | **claude-opus-5** | GPT-5.6 sol | Phase 1 (light) / 9 (deep) |
+| Backend | `worker-backend` | codex | **GPT-5.6 sol** | claude-opus-5 | Phase 3 |
+| Frontend | `worker-frontend` | claude | **claude-sonnet-5** | Opus 5 (review via god) | Phase 4 |
+| QA | `worker-qa` | codex | **GPT-5.6 sol** | claude-sonnet-5 | Phase 2 (a11y) / 9 (main) |
 | Release | `worker-release` | claude | **claude-sonnet-5** | — | Post-layout-freeze / Phase 10 |
-| Visuals | `worker-visuals` | claude | **claude-sonnet-5** | — (NEVER Claude raster image gen — briefs+SVG only) | Phase 2+ |
+| Visuals | `worker-visuals` | codex | **GPT-5.6 sol** (reasoning) | — (NEVER Claude raster image gen) | Phase 2+ |
 
-Small repetitive mechanical fixes (renaming, fixtures, formatting) → `claude-haiku-4-5-20251001`
-throwaway workers, spawned ad hoc by god; never Opus 5.
-
-> Note: per-agent sections below may still describe the original cross-provider plan (GPT-5.6 for
-> some roles). That is SUPERSEDED — every agent is Claude per this table and ADR-0007. Opus roles keep
-> "highest-capability reasoning"; Sonnet roles keep "capable implementation" — the intent is unchanged.
+Small repetitive mechanical fixes (renaming, fixtures, formatting) → `claude-haiku-4-5-20251001` or a
+GPT-5.5 codex throwaway worker, spawned ad hoc by god; never Opus 5.
 
 ## Activation timeline (token frugality — not all 11 run at once)
 - **Phase 1 (now, on autonomy-enable):** Architect, QEM Sci, QEC Sci, UX Director, Optimizer, Security — independent spec review.

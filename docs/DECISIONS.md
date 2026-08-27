@@ -78,3 +78,17 @@ usage. Supersedes the cross-provider diversity intent of MISSION §5/§6. Visual
 no-Claude-raster-imagery rule (briefs + programmatic SVG only).
 **Status:** Accepted. Supersedes provider choices in MISSION §5/§6 and the per-agent prose in
 AGENT_ROSTER.md (the allocation table is authoritative).
+
+## ADR-0008 — 2026-08-27 — REVERT ADR-0007; keep original cross-provider plan
+**Decision:** Revert the all-Claude conversion (ADR-0007). Restore the original MISSION §5–§6 model
+allocation: Architect/QEM/Backend/QA/Visuals = `GPT-5.6 sol` (codex), Optimizer = `GPT-5.6 terra`
+(codex); QEC/UX/Security = `claude-opus-5`, Frontend/Release = `claude-sonnet-5`.
+**Rationale:** There was NO confirmed defect in the ChatGPT/codex models. codex is installed (0.146.0)
+and logged in via `~/.codex/auth.json` with NO `OPENAI_API_KEY`, i.e. it runs on the user's ChatGPT
+subscription — the "no metered API" requirement was already satisfied for codex. The only real bug was
+the Claude friendly-name model id (fixed in ADR-0006). ADR-0007's swap to Claude was an over-correction
+off a mis-scoped "yes"; the user wants the ChatGPT models kept.
+**Open caveat:** codex model strings "GPT-5.6 sol/terra" are the environment's friendly names (the
+trading roster used them and codex agents spawned with them). If a codex agent shows a model-resolution
+failure like the Claude one did, god finds the exact codex slug then.
+**Status:** Accepted. ADR-0007 superseded. ADR-0006 (canonical Claude IDs + subscription auth) STANDS.
