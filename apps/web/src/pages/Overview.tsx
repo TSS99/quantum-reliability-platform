@@ -31,7 +31,7 @@ export function Overview() {
             New analysis <ArrowRight size={14} aria-hidden />
           </Link>
         </div>
-        <Card className="p-4">
+        <Card lit className="overflow-hidden p-5 qo-sweep">
           <Rail states={{ circuit: 'complete', hardware: 'complete', noise: 'active' }} />
         </Card>
       </section>
@@ -47,14 +47,14 @@ export function Overview() {
             { label: 'Goal feasibility', weight: 0.25, contribution: 0.12 },
           ]}
         />
-        <Card className="p-4">
+        <Card interactive className="qo-rise p-5" style={{ ['--i' as string]: 1 }}>
           <div className="text-eyebrow uppercase text-text-secondary">Goal pass rate</div>
-          <div className="mt-1 metric text-metric-xl text-text-primary">{passRate}%</div>
+          <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow">{passRate}%</div>
           <div className="text-caption text-text-muted">of demo workloads have a feasible recommended strategy</div>
         </Card>
-        <Card className="p-4">
+        <Card interactive className="qo-rise p-5" style={{ ['--i' as string]: 2 }}>
           <div className="text-eyebrow uppercase text-text-secondary">Demo backends</div>
-          <div className="mt-1 metric text-metric-xl text-text-primary">{BACKENDS.length}</div>
+          <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow">{BACKENDS.length}</div>
           <div className="text-caption text-text-muted">superconducting + ion-trap profiles (simulated calibration)</div>
         </Card>
       </div>
@@ -62,8 +62,8 @@ export function Overview() {
       <section aria-labelledby="hw-h">
         <h2 id="hw-h" className="mb-2 text-eyebrow uppercase text-text-secondary">Active hardware profiles</h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {BACKENDS.map((b) => (
-            <Card key={b.backend_id} className="flex gap-3 p-4">
+          {BACKENDS.map((b, i) => (
+            <Card key={b.backend_id} interactive className="qo-rise flex gap-3 p-4" style={{ ['--i' as string]: i }}>
               <CouplingMap profile={b} size={92} summary={b.display_name + ' qubit connectivity, ' + b.qubit_count + ' qubits'} />
               <div className="min-w-0">
                 <div className="truncate text-body-s font-medium text-text-primary">{b.display_name}</div>
