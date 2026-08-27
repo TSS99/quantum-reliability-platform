@@ -49,7 +49,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm audit --audit-level=high || true  # TODO: drop '|| true' once FE deps are audit-clean
+      - run: npm audit --audit-level=high
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
