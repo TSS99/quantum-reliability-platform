@@ -64,3 +64,17 @@ the user's ChatGPT/subscription login, not an OpenAI API key).
 **Apply:** corrected spawn-requests re-issued (`claude-opus-5`/`claude-sonnet-5`). Running wrong-model
 workers must be stopped/restarted (operator) to respawn on the corrected model.
 **Status:** Accepted.
+
+## ADR-0007 — 2026-08-27 — Whole floor on Claude subscription (drop codex/OpenAI)
+**Decision:** Per user direction, ALL agents run on the user's Claude subscription — no codex/OpenAI,
+no metered API. The 6 roles originally allocated to GPT-5.6 (codex) are reassigned to Claude:
+Architect → `claude-opus-5`, QEM Sci → `claude-opus-5`, Optimizer → `claude-sonnet-5`,
+Backend → `claude-sonnet-5`, QA → `claude-sonnet-5`, Visuals → `claude-sonnet-5`. Tiering:
+reasoning-critical (Architect, QEM/QEC Sci, UX Director, Security) = Opus 5; implementation
+(Optimizer, Backend, Frontend, QA, Release, Visuals) = Sonnet 5; ad-hoc mechanical =
+`claude-haiku-4-5-20251001`. Opus roles may escalate hard sub-problems via god.
+**Rationale:** User has direct subscription access to the Claude models and wants zero API/OpenAI
+usage. Supersedes the cross-provider diversity intent of MISSION §5/§6. Visuals stays bound by the
+no-Claude-raster-imagery rule (briefs + programmatic SVG only).
+**Status:** Accepted. Supersedes provider choices in MISSION §5/§6 and the per-agent prose in
+AGENT_ROSTER.md (the allocation table is authoritative).
