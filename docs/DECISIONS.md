@@ -48,3 +48,19 @@ drawings, coupling maps) is preferred and unrestricted.
 **Rationale:** Mission forbids Claude raster imagery and provides an explicit brief+placeholder
 fallback. Functional SVG visualizations cover most real needs.
 **Status:** Accepted.
+
+## ADR-0006 — 2026-08-27 — Use canonical model IDs, not friendly names; auth is subscription (no API)
+**Decision:** Spawn-requests for Claude agents must use canonical model IDs, not friendly display
+names: `claude-opus-5` (was "Opus 5"), `claude-sonnet-5` (was "Sonnet 5"),
+`claude-haiku-4-5-20251001` (was "Haiku 4.5"). Codex agents keep their provider slugs
+(`GPT-5.6 sol` / `GPT-5.6 terra`).
+**Rationale:** The friendly string "Opus 5" did not resolve at launch, so the Security worker (and the
+other Claude workers) fell back to a default model — the reported "can't select Opus 5". Three Claude
+workers then tripped the circuit breaker. The environment's canonical Opus 5 ID is `claude-opus-5`.
+**Auth:** Verified `ANTHROPIC_API_KEY` is NOT set; Claude auth is `authMethod: claude.ai`,
+`apiProvider: firstParty` (subscription login `tilock.2025@gmail.com`). Claude agents already run on the
+user's direct subscription access, NOT metered API. Codex agents use the `codex` CLI login (ensure it is
+the user's ChatGPT/subscription login, not an OpenAI API key).
+**Apply:** corrected spawn-requests re-issued (`claude-opus-5`/`claude-sonnet-5`). Running wrong-model
+workers must be stopped/restarted (operator) to respawn on the corrected model.
+**Status:** Accepted.
