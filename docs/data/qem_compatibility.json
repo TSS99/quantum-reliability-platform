@@ -1,0 +1,474 @@
+{
+  "$comment": "SINGLE machine-readable source for QEM technique compatibility. Consumed by the backend strategy generator (Phase 5), the MISSION §22 QEM Strategy Explorer, and the scientific invariant tests (§46). Do NOT restate these rules in prose anywhere else — docs/QEM_METHODS.md explains them, this file defines them.",
+  "schema_version": "1.0.0",
+  "matrix_version": "2026-08-27",
+  "authored_by": "worker-qem-sci",
+  "governed_by": ["docs/PHASE1_RECONCILE.md#RECON-12", "docs/PHASE1_RECONCILE.md#RECON-13", "docs/PHASE1_RECONCILE.md#RECON-14"],
+  "explained_in": "docs/QEM_METHODS.md",
+  "provenance": "heuristic",
+
+  "evaluation": {
+    "verdicts": ["compatible", "conditional", "incompatible"],
+    "rule_order": "Rules are evaluated top-to-bottom; the FIRST rule whose condition matches wins. If no rule matches, `default_verdict` applies.",
+    "condition_grammar": {
+      "leaf": { "field": "<namespaced field>", "op": "eq | ne | gt | gte | lt | lte | in", "value": "<literal, or a field expression when marked value_is_expression>" },
+      "all": "array of conditions, logical AND",
+      "any": "array of conditions, logical OR",
+      "missing_field": "A referenced field that is null/absent makes the leaf evaluate FALSE and raises INSUFFICIENT_CALIBRATION_DATA at preflight. Never coerce a missing value to 0 (MISSION §20)."
+    },
+    "verdict_payload": {
+      "compatible": "no payload",
+      "conditional": "`requires` (human-readable precondition) + `detail_code`; the strategy MAY be offered once the precondition is satisfied or explicitly labelled",
+      "incompatible": "`reason_code` (shared enum) + `detail_code`; the strategy MUST NOT be generated as a candidate, and therefore can never be recommended (RECON-19)"
+    }
+  },
+
+  "reason_code_enum": [
+    "COST_EXCEEDED",
+    "TARGET_ERROR_UNLIKELY",
+    "CALIBRATION_STALE",
+    "MITIGATION_OVERHEAD_TOO_HIGH",
+    "UNSUPPORTED_CIRCUIT_FEATURE",
+    "QEC_CAPABILITY_MISSING",
+    "INSUFFICIENT_CALIBRATION_DATA"
+  ],
+  "proposed_reason_codes": {
+    "$comment": "NOT yet in the frozen RECON-21 enum, which Architect owns. Until approved, the rules below use the closest frozen code and carry the precise meaning in `detail_code` plus a `proposed_reason_code` hint. One addition requested:",
+    "TECHNIQUE_NOT_IMPLEMENTED": "The technique is declared and modelled but has no executable implementation in this version (PEC, CDR, PEA, symmetry verification, post-selection). Currently mapped onto UNSUPPORTED_CIRCUIT_FEATURE, which is semantically wrong: the circuit is fine, the product is not."
+  },
+
+  "circuit_features": {
+    "circuit.task_type": { "type": "enum", "values": ["expectation_value", "sampling_distribution"], "source": "QuantumWorkload (RECON-14: every example workload declares one, together with its observable)" },
+    "circuit.num_qubits": { "type": "int", "source": "CircuitProfile" },
+    "circuit.num_measured_qubits": { "type": "int", "source": "CircuitProfile" },
+    "circuit.depth": { "type": "int", "source": "CircuitProfile" },
+    "circuit.two_qubit_gate_count": { "type": "int", "source": "CircuitProfile" },
+    "circuit.idle_exposure": { "type": "float", "unit": "dimensionless", "range": [0, 1], "definition": "total qubit-idle time divided by (num_qubits x scheduled circuit duration); 0 means no schedulable idle window", "source": "CircuitProfile (MISSION §18 step 2)" },
+    "circuit.has_mid_circuit_measurement": { "type": "bool", "source": "CircuitProfile" },
+    "circuit.has_reset": { "type": "bool", "source": "CircuitProfile" },
+    "circuit.has_dynamic_circuit": { "type": "bool", "definition": "classical feed-forward / conditional gates", "source": "CircuitProfile" },
+    "circuit.estimated_duration_us": { "type": "float", "unit": "us", "source": "CircuitProfile x HardwareProfile gate durations" }
+  },
+
+  "backend_capabilities": {
+    "backend.supports_delay_instruction": { "type": "bool", "source": "HardwareProfile" },
+    "backend.supports_scheduled_circuits": { "type": "bool", "definition": "the provider accepts a timing-resolved (ALAP/ASAP-scheduled) circuit; without it a DD sequence has no defined placement", "source": "HardwareProfile" },
+    "backend.provides_readout_calibration": { "type": "bool", "definition": "per-qubit (or per-group) assignment-error data exists in the calibration snapshot in use", "source": "CalibrationSnapshot" },
+    "backend.provides_gate_error_model": { "type": "bool", "definition": "per-gate error rates sufficient to estimate a quasi-probability one-norm; required by the PEC calculator", "source": "CalibrationSnapshot" },
+    "backend.supports_mid_circuit_measurement": { "type": "bool", "source": "HardwareProfile" },
+    "backend.max_circuit_depth": { "type": "int", "nullable": true, "source": "HardwareProfile; null = no declared limit" },
+    "backend.max_circuits_per_job": { "type": "int", "nullable": true, "source": "HardwareProfile" },
+    "backend.t2_median_us": { "type": "float", "unit": "us", "source": "CalibrationSnapshot" },
+    "backend.calibration_age_hours": { "type": "float", "unit": "hours", "source": "CalibrationSnapshot" }
+  },
+
+  "derived_quantities": {
+    "derived.scaled_duration_us": { "formula": "circuit.estimated_duration_us * max(params.zne.scale_factors)", "used_by": ["zne"] },
+    "derived.pec_gamma": { "formula": "product over gates g of (1 + eps_g) / (1 - eps_g)", "provenance": "heuristic", "note": "depolarizing-model approximation of the quasi-probability one-norm; see QEM_METHODS.md section 5.5" },
+    "derived.pec_gamma_squared": { "formula": "derived.pec_gamma ** 2", "meaning": "shot multiplier required to hold statistical error at the unmitigated level", "used_by": ["pec"] }
+  },
+
+  "thresholds": {
+    "$comment": "Configurable and documented, never presented as universal physical constants (MISSION §21).",
+    "readout_calibration_max_age_hours": { "value": 24, "provenance": "heuristic" },
+    "readout_dense_inversion_max_qubits": { "value": 10, "provenance": "heuristic", "note": "RECON-13: dense 2^n inversion is not offered at any size; this threshold marks where even discussing it is suppressed" },
+    "dd_low_benefit_idle_exposure": { "value": 0.05, "provenance": "heuristic" },
+    "pec_max_gamma_squared": { "value": 10000, "provenance": "heuristic", "note": "beyond a ~1e4 shot multiplier PEC is not fundable at any realistic budget" }
+  },
+
+  "techniques": [
+    {
+      "id": "raw",
+      "name": "No mitigation (baseline)",
+      "category": "baseline",
+      "role": "strategy",
+      "maturity": "implemented",
+      "task_types": ["expectation_value", "sampling_distribution"],
+      "shot_multiplier": 1.0,
+      "default_verdict": "compatible",
+      "rules": []
+    },
+    {
+      "id": "readout_mitigation",
+      "name": "Readout (assignment) error mitigation",
+      "category": "post_processing",
+      "role": "strategy",
+      "maturity": "implemented",
+      "task_types": ["expectation_value", "sampling_distribution"],
+      "parameters": {
+        "method": { "type": "enum", "values": ["tensored", "m3"], "default": "tensored", "note": "RECON-13: dense 2^n matrix inversion is NOT offered at any size" }
+      },
+      "default_verdict": "compatible",
+      "rules": [
+        {
+          "when": { "field": "circuit.num_measured_qubits", "op": "lte", "value": 0 },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "NO_MEASUREMENTS",
+          "message": "Nothing is measured, so there is no assignment error to correct."
+        },
+        {
+          "when": { "field": "backend.provides_readout_calibration", "op": "eq", "value": false },
+          "verdict": "incompatible",
+          "reason_code": "INSUFFICIENT_CALIBRATION_DATA",
+          "detail_code": "NO_READOUT_CALIBRATION",
+          "message": "No assignment-error data in the calibration snapshot; the correction matrix cannot be built."
+        },
+        {
+          "when": { "field": "backend.calibration_age_hours", "op": "gt", "value": 24 },
+          "verdict": "conditional",
+          "reason_code": "CALIBRATION_STALE",
+          "detail_code": "READOUT_CALIBRATION_STALE",
+          "requires": "Refresh the readout calibration, or accept the estimate with a stale-calibration warning. A stale assignment matrix can INCREASE bias rather than remove it.",
+          "message": "Readout calibration is older than the configured 24 h window."
+        },
+        {
+          "when": { "field": "circuit.num_measured_qubits", "op": "gt", "value": 10 },
+          "verdict": "conditional",
+          "detail_code": "LARGE_MEASUREMENT_REGISTER",
+          "requires": "method = tensored or m3. Dense 2^n inversion is not offered (RECON-13)."
+        },
+        {
+          "when": { "field": "circuit.task_type", "op": "eq", "value": "sampling_distribution" },
+          "verdict": "conditional",
+          "detail_code": "QUASIPROB_NEGATIVE_COUNTS",
+          "requires": "A non-negativity step (M3 least-squares / closest-probability-vector projection). Raw inversion returns quasi-probabilities that can be negative, which is not a distribution."
+        }
+      ]
+    },
+    {
+      "id": "dynamical_decoupling",
+      "name": "Dynamical decoupling",
+      "category": "circuit_level",
+      "role": "strategy",
+      "maturity": "implemented",
+      "task_types": ["expectation_value", "sampling_distribution"],
+      "parameters": {
+        "sequence": { "type": "enum", "values": ["XY4", "XX"], "default": "XY4" }
+      },
+      "default_verdict": "compatible",
+      "rules": [
+        {
+          "when": { "field": "circuit.idle_exposure", "op": "lte", "value": 0 },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "NO_IDLE_WINDOWS",
+          "message": "The circuit has no idle exposure, so DD would be a no-op. RECON-13: do not offer a technique at zero benefit."
+        },
+        {
+          "when": { "field": "backend.supports_delay_instruction", "op": "eq", "value": false },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "NO_DELAY_SUPPORT",
+          "message": "The backend does not accept explicit delay instructions; a DD sequence has nowhere to be placed."
+        },
+        {
+          "when": { "field": "backend.supports_scheduled_circuits", "op": "eq", "value": false },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "NO_SCHEDULING_SUPPORT",
+          "message": "Without timing-resolved scheduling the placement of a DD sequence is undefined."
+        },
+        {
+          "when": { "field": "circuit.has_mid_circuit_measurement", "op": "eq", "value": true },
+          "verdict": "conditional",
+          "detail_code": "DD_ACROSS_MEASUREMENT",
+          "requires": "DD sequences confined to idle windows that do not span a measurement or reset. A sequence straddling a measurement is not a decoupling sequence."
+        },
+        {
+          "when": { "field": "circuit.idle_exposure", "op": "lt", "value": 0.05 },
+          "verdict": "conditional",
+          "detail_code": "LOW_IDLE_EXPOSURE",
+          "requires": "Offer only with an explicit low-benefit label: below ~5 % idle exposure the modelled bias reduction is smaller than the uncertainty of the model producing it."
+        }
+      ]
+    },
+    {
+      "id": "pauli_twirling",
+      "name": "Pauli twirling / randomized compiling",
+      "category": "noise_tailoring",
+      "role": "modifier",
+      "modifies": ["zne", "pec"],
+      "standalone_offered": false,
+      "maturity": "implemented",
+      "task_types": ["expectation_value"],
+      "parameters": {
+        "num_instances": { "type": "int", "default": 16, "range": [8, 64], "note": "total shots are SPLIT across instances; shots are not multiplied" }
+      },
+      "default_verdict": "compatible",
+      "rules": [
+        {
+          "when": { "field": "request.standalone", "op": "eq", "value": true },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "TWIRLING_NOT_STANDALONE",
+          "message": "RECON-13: twirling converts coherent error into stochastic Pauli error. It does not reduce the average bias of an expectation value on its own, so it is a modifier flag on ZNE/PEC, never a strategy of its own. This is why MISSION §18's 'Twirling+Readout' candidate is not generated in V1."
+        },
+        {
+          "when": { "field": "circuit.has_dynamic_circuit", "op": "eq", "value": true },
+          "verdict": "conditional",
+          "detail_code": "TWIRL_ACROSS_FEEDFORWARD",
+          "requires": "Twirl only the static blocks between feed-forward boundaries; V1 does not propagate the twirl frame through a classically conditioned branch."
+        },
+        {
+          "when": { "all": [
+            { "field": "backend.max_circuits_per_job", "op": "ne", "value": null },
+            { "field": "params.pauli_twirling.num_instances", "op": "gt", "value": "backend.max_circuits_per_job", "value_is_expression": true }
+          ] },
+          "verdict": "conditional",
+          "detail_code": "JOB_BATCH_LIMIT",
+          "requires": "Split the twirl instances across jobs. The extra job count is a runtime and queueing cost, not a shot cost."
+        }
+      ]
+    },
+    {
+      "id": "zne",
+      "name": "Zero-noise extrapolation (digital gate folding)",
+      "category": "extrapolation",
+      "role": "strategy",
+      "maturity": "implemented",
+      "task_types": ["expectation_value"],
+      "recommended_modifiers": ["pauli_twirling"],
+      "recommended_modifier_rationale": "Extrapolation assumes the effective noise grows smoothly and predictably with the folding factor. Coherent error does not — it can accumulate quadratically and even partially cancel. Twirling makes the assumption approximately true; without it the extrapolated intercept carries an unmodelled bias.",
+      "parameters": {
+        "noise_scaling": { "type": "enum", "values": ["digital_gate_folding"], "default": "digital_gate_folding", "note": "RECON-13: analog / pulse-stretch scaling is NOT in V1" },
+        "scale_factors": { "type": "int[]", "default": [1, 3, 5], "allowed": [[1, 3], [1, 3, 5]], "note": "odd integers only; global folding U -> U (U_dagger U)^k gives lambda = 2k+1" },
+        "extrapolator": { "type": "enum", "values": ["richardson", "linear"], "default": "richardson" }
+      },
+      "default_verdict": "compatible",
+      "rules": [
+        {
+          "when": { "field": "circuit.task_type", "op": "ne", "value": "expectation_value" },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "ZNE_REQUIRES_EXPECTATION_VALUE",
+          "message": "Extrapolation acts on a scalar estimator. Extrapolating a probability distribution bin by bin does not produce a normalised, non-negative distribution."
+        },
+        {
+          "when": { "field": "circuit.has_mid_circuit_measurement", "op": "eq", "value": true },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "ZNE_INVALID_WITH_MID_CIRCUIT_MEASUREMENT",
+          "message": "Folding relies on U (U_dagger U)^k being an identity insertion. A measurement is not unitary, so the folded circuit is not the same computation evaluated at higher noise."
+        },
+        {
+          "when": { "field": "circuit.has_reset", "op": "eq", "value": true },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "ZNE_INVALID_WITH_RESET",
+          "message": "Reset is non-unitary; the same folding-identity argument fails."
+        },
+        {
+          "when": { "field": "circuit.has_dynamic_circuit", "op": "eq", "value": true },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "ZNE_INVALID_WITH_FEEDFORWARD",
+          "message": "A classically conditioned branch has no folded counterpart with a well-defined noise scale factor."
+        },
+        {
+          "when": { "all": [
+            { "field": "backend.max_circuit_depth", "op": "ne", "value": null },
+            { "field": "circuit.depth", "op": "gt", "value": "backend.max_circuit_depth / max(params.zne.scale_factors)", "value_is_expression": true }
+          ] },
+          "verdict": "conditional",
+          "detail_code": "SCALED_DEPTH_EXCEEDS_BACKEND",
+          "requires": "Reduce scale_factors to [1, 3], or reject. The largest folded circuit must fit inside the backend depth limit."
+        },
+        {
+          "when": { "field": "derived.scaled_duration_us", "op": "gt", "value": "backend.t2_median_us", "value_is_expression": true },
+          "verdict": "conditional",
+          "detail_code": "SCALED_DURATION_EXCEEDS_T2",
+          "requires": "Reduce the maximum scale factor. Once a folded circuit runs past median T2 its expectation value has decohered toward zero, the extrapolation is anchored on a dead point, and ZNE can end up WORSE than raw."
+        }
+      ]
+    },
+    {
+      "id": "pec",
+      "name": "Probabilistic error cancellation",
+      "category": "quasi_probability",
+      "role": "calculator",
+      "maturity": "planned",
+      "calculator_only": true,
+      "executable_in_v1": false,
+      "provenance_of_outputs": "planning_estimate",
+      "task_types": ["expectation_value"],
+      "default_verdict": "conditional",
+      "rules": [
+        {
+          "when": { "field": "request.executable", "op": "eq", "value": true },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "proposed_reason_code": "TECHNIQUE_NOT_IMPLEMENTED",
+          "detail_code": "PEC_NOT_EXECUTABLE_IN_V1",
+          "message": "RECON-13: PEC ships as an overhead / feasibility calculator only. It is never generated as an executable candidate and can never be the recommendation."
+        },
+        {
+          "when": { "field": "backend.provides_gate_error_model", "op": "eq", "value": false },
+          "verdict": "incompatible",
+          "reason_code": "INSUFFICIENT_CALIBRATION_DATA",
+          "detail_code": "NO_GATE_ERROR_MODEL",
+          "message": "Without per-gate error rates the one-norm gamma cannot be estimated, so no overhead number may be shown (MISSION §20: render as 'Not provided', never as zero)."
+        },
+        {
+          "when": { "field": "derived.pec_gamma_squared", "op": "gt", "value": 10000 },
+          "verdict": "incompatible",
+          "reason_code": "MITIGATION_OVERHEAD_TOO_HIGH",
+          "detail_code": "PEC_OVERHEAD_INFEASIBLE",
+          "message": "The modelled shot multiplier gamma^2 exceeds the configured feasibility ceiling. Report the number; do not offer the technique."
+        },
+        {
+          "when": { "field": "circuit.task_type", "op": "ne", "value": "expectation_value" },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "detail_code": "PEC_REQUIRES_EXPECTATION_VALUE"
+        }
+      ]
+    },
+    {
+      "id": "cdr",
+      "name": "Clifford data regression",
+      "category": "learning_based",
+      "role": "reference",
+      "maturity": "planned",
+      "offered": false,
+      "task_types": ["expectation_value"],
+      "default_verdict": "incompatible",
+      "rules": [
+        {
+          "when": { "field": "request.executable", "op": "in", "value": [true, false] },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "proposed_reason_code": "TECHNIQUE_NOT_IMPLEMENTED",
+          "detail_code": "CDR_NOT_IMPLEMENTED",
+          "message": "Declared for the §22 Explorer only. Needs near-Clifford training circuits plus a classical stabilizer reference; not built in V1."
+        }
+      ]
+    },
+    {
+      "id": "pea",
+      "name": "Probabilistic error amplification",
+      "category": "learning_based",
+      "role": "reference",
+      "maturity": "planned",
+      "offered": false,
+      "task_types": ["expectation_value"],
+      "default_verdict": "incompatible",
+      "rules": [
+        {
+          "when": { "field": "request.executable", "op": "in", "value": [true, false] },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "proposed_reason_code": "TECHNIQUE_NOT_IMPLEMENTED",
+          "detail_code": "PEA_NOT_IMPLEMENTED",
+          "message": "Declared for the §22 Explorer only. Requires a learned sparse Pauli-Lindblad noise model per layer; not built in V1."
+        }
+      ]
+    },
+    {
+      "id": "symmetry_verification",
+      "name": "Symmetry verification",
+      "category": "post_selection",
+      "role": "reference",
+      "maturity": "planned",
+      "offered": false,
+      "task_types": ["expectation_value", "sampling_distribution"],
+      "default_verdict": "incompatible",
+      "rules": [
+        {
+          "when": { "field": "request.executable", "op": "in", "value": [true, false] },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "proposed_reason_code": "TECHNIQUE_NOT_IMPLEMENTED",
+          "detail_code": "SYMMETRY_VERIFICATION_NOT_IMPLEMENTED",
+          "message": "Declared for the §22 Explorer only. Requires a declared symmetry of the workload (e.g. particle number) that the V1 workload model does not carry."
+        }
+      ]
+    },
+    {
+      "id": "post_selection",
+      "name": "Post-selection on ancilla / parity checks",
+      "category": "post_selection",
+      "role": "reference",
+      "maturity": "planned",
+      "offered": false,
+      "task_types": ["expectation_value", "sampling_distribution"],
+      "default_verdict": "incompatible",
+      "rules": [
+        {
+          "when": { "field": "request.executable", "op": "in", "value": [true, false] },
+          "verdict": "incompatible",
+          "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+          "proposed_reason_code": "TECHNIQUE_NOT_IMPLEMENTED",
+          "detail_code": "POST_SELECTION_NOT_IMPLEMENTED",
+          "message": "Declared for the §22 Explorer only. Requires check ancillas in the workload and mid-circuit measurement on the backend; not built in V1."
+        }
+      ]
+    }
+  ],
+
+  "combinations": [
+    {
+      "techniques": ["dynamical_decoupling", "readout_mitigation"],
+      "verdict": "compatible",
+      "ordering": ["schedule circuit", "insert DD into idle windows", "execute", "apply readout correction to counts"],
+      "note": "Independent stages: DD is compile-time, readout mitigation is post-processing. No interaction."
+    },
+    {
+      "techniques": ["zne", "readout_mitigation"],
+      "verdict": "compatible",
+      "ordering": ["fold to each scale factor", "execute each folded circuit", "apply readout correction PER SCALE FACTOR", "extrapolate the corrected values"],
+      "note": "ORDERING IS LOAD-BEARING. Correcting after extrapolating is wrong: readout error is a fixed end-of-circuit channel that does NOT grow with the folding factor, so leaving it inside the extrapolation makes the value-vs-lambda curve non-affine and biases the zero-noise intercept."
+    },
+    {
+      "techniques": ["dynamical_decoupling", "zne"],
+      "verdict": "conditional",
+      "requires": "DD is re-inserted AFTER folding, on the folded circuit's own schedule.",
+      "detail_code": "DD_REINSERT_AFTER_FOLD",
+      "ordering": ["fold to scale factor lambda", "re-schedule the folded circuit", "insert DD into the folded circuit's idle windows", "execute", "extrapolate"],
+      "note": "RECON-13. Folding changes the schedule and creates new idle windows; a DD schedule computed on the unfolded circuit is invalid afterwards, and DD coverage that varies with lambda breaks the smooth-scaling assumption extrapolation depends on."
+    },
+    {
+      "techniques": ["pauli_twirling", "zne"],
+      "verdict": "compatible",
+      "ordering": ["fold to scale factor lambda", "generate N twirl instances of the FOLDED circuit", "split shots across instances", "average, then extrapolate"],
+      "note": "Twirl after folding, independently per scale factor. Twirling first and folding afterwards re-introduces correlated structure across the folded copies."
+    },
+    {
+      "techniques": ["pauli_twirling", "readout_mitigation"],
+      "verdict": "incompatible",
+      "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+      "detail_code": "TWIRLING_NOT_STANDALONE",
+      "note": "This pair is exactly MISSION §18's 'Twirling+Readout' candidate. It is NOT generated: twirling has no bias benefit without an extrapolation or quasi-probability consumer, and readout mitigation is unaffected by twirling, so the pair costs compilation and job count for a modelled benefit of zero. RECON-13 supersedes §18 here."
+    },
+    {
+      "techniques": ["dynamical_decoupling", "zne", "readout_mitigation"],
+      "verdict": "conditional",
+      "requires": "The DD_REINSERT_AFTER_FOLD ordering above, plus per-scale-factor readout correction.",
+      "detail_code": "DD_REINSERT_AFTER_FOLD",
+      "ordering": ["fold", "re-schedule", "insert DD", "twirl (if the modifier is on)", "execute", "readout-correct per scale factor", "extrapolate"]
+    },
+    {
+      "techniques": ["pec", "*"],
+      "verdict": "incompatible",
+      "reason_code": "UNSUPPORTED_CIRCUIT_FEATURE",
+      "detail_code": "PEC_NOT_EXECUTABLE_IN_V1",
+      "note": "PEC never combines with anything because it never executes in V1. Its calculator output stands alone and is labelled planning_estimate."
+    }
+  ],
+
+  "strategies": {
+    "$comment": "The candidate set the Phase-5 generator produces for MISSION §18 step 5. Generation order is fixed so tie-breaks are deterministic (RECON-20). A candidate is emitted only when every technique in it, and the combination entry, evaluates to compatible or to a satisfied conditional.",
+    "items": [
+      { "id": "raw", "label": "Raw (no mitigation)", "techniques": [], "modifiers": [], "always_offered": true, "note": "Baseline. Always present, so every mitigated estimate has something honest to be compared against." },
+      { "id": "readout", "label": "Readout mitigation", "techniques": ["readout_mitigation"], "modifiers": [] },
+      { "id": "dd_readout", "label": "DD + readout mitigation", "techniques": ["dynamical_decoupling", "readout_mitigation"], "modifiers": [] },
+      { "id": "zne", "label": "ZNE", "techniques": ["zne"], "modifiers": ["pauli_twirling"] },
+      { "id": "zne_readout", "label": "ZNE + readout mitigation", "techniques": ["zne", "readout_mitigation"], "modifiers": ["pauli_twirling"] },
+      { "id": "dd_zne_readout", "label": "DD + ZNE + readout mitigation", "techniques": ["dynamical_decoupling", "zne", "readout_mitigation"], "modifiers": ["pauli_twirling"] },
+      { "id": "pec_estimate", "label": "PEC (feasibility estimate only)", "techniques": ["pec"], "modifiers": [], "executable": false, "recommendable": false, "provenance": "planning_estimate" }
+    ],
+    "not_offered": [
+      { "id": "twirling_readout", "from": "MISSION §18 step 5", "reason": "RECON-13: twirling is a modifier, not a strategy; paired with readout mitigation its modelled benefit is zero.", "detail_code": "TWIRLING_NOT_STANDALONE" }
+    ]
+  }
+}
