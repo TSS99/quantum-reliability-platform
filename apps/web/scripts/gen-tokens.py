@@ -59,12 +59,19 @@ colors = {k.replace(".", "-"): f"var({cssvar(k)})" for k in tok["color"]["dark"]
 spacing_map = {k: f"var(--space-{k.replace('.','_')})" for k in tok["spacing"]}
 radius_map = {k: f"var(--radius-{k})" for k in tok["radius"]}
 
+font_size = {}
+for k, s in tok["typography"]["scale"].items():
+    opts = {"lineHeight": s["line"], "letterSpacing": s.get("tracking", "0"),
+            "fontWeight": str(s["weight"])}
+    font_size[k.replace(".", "-")] = [s["size"], opts]
+
 ts = (
     "// GENERATED from docs/data/design_tokens.json — do not edit by hand.\n"
     "// Colors resolve to CSS vars (tokens.css), so a [data-theme] switch retints everything.\n"
     "export const colors = " + _json.dumps(colors, indent=2) + " as const;\n\n"
     "export const spacing = " + _json.dumps(spacing_map, indent=2) + " as const;\n\n"
     "export const borderRadius = " + _json.dumps(radius_map, indent=2) + " as const;\n\n"
+    "export const fontSize = " + _json.dumps(font_size, indent=2) + " as const;\n\n"
     "export const fontFamily = {\n"
     "  display: ['var(--font-display)'],\n"
     "  body: ['var(--font-body)'],\n"

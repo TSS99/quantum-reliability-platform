@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { colors, spacing, borderRadius, fontFamily } from './src/styles/tailwind-tokens';
+import { colors, spacing, borderRadius, fontSize, fontFamily } from './src/styles/tailwind-tokens';
 
 // Colors/spacing/radius/fonts are GENERATED from docs/data/design_tokens.json
 // (see src/styles/tailwind-tokens.ts). They resolve to CSS vars, so a [data-theme]
@@ -11,6 +11,7 @@ export default {
       colors,
       spacing,
       borderRadius,
+      fontSize,
       fontFamily,
     },
   },

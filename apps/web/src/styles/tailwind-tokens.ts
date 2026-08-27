@@ -68,6 +68,113 @@ export const borderRadius = {
   "chip": "var(--radius-chip)"
 } as const;
 
+export const fontSize = {
+  "display-l": [
+    "2rem",
+    {
+      "lineHeight": "1.15",
+      "letterSpacing": "-0.02em",
+      "fontWeight": "600"
+    }
+  ],
+  "display-m": [
+    "1.5rem",
+    {
+      "lineHeight": "1.20",
+      "letterSpacing": "-0.015em",
+      "fontWeight": "600"
+    }
+  ],
+  "heading-l": [
+    "1.25rem",
+    {
+      "lineHeight": "1.30",
+      "letterSpacing": "-0.01em",
+      "fontWeight": "600"
+    }
+  ],
+  "heading-m": [
+    "1rem",
+    {
+      "lineHeight": "1.40",
+      "letterSpacing": "0",
+      "fontWeight": "600"
+    }
+  ],
+  "eyebrow": [
+    "0.8125rem",
+    {
+      "lineHeight": "1.40",
+      "letterSpacing": "0.08em",
+      "fontWeight": "600"
+    }
+  ],
+  "body-m": [
+    "1rem",
+    {
+      "lineHeight": "1.50",
+      "letterSpacing": "0",
+      "fontWeight": "400"
+    }
+  ],
+  "body-s": [
+    "0.875rem",
+    {
+      "lineHeight": "1.45",
+      "letterSpacing": "0",
+      "fontWeight": "400"
+    }
+  ],
+  "caption": [
+    "0.75rem",
+    {
+      "lineHeight": "1.40",
+      "letterSpacing": "0.01em",
+      "fontWeight": "400"
+    }
+  ],
+  "metric-xl": [
+    "2rem",
+    {
+      "lineHeight": "1.10",
+      "letterSpacing": "-0.01em",
+      "fontWeight": "500"
+    }
+  ],
+  "metric-l": [
+    "1.5rem",
+    {
+      "lineHeight": "1.15",
+      "letterSpacing": "-0.01em",
+      "fontWeight": "500"
+    }
+  ],
+  "metric-m": [
+    "1.125rem",
+    {
+      "lineHeight": "1.25",
+      "letterSpacing": "0",
+      "fontWeight": "500"
+    }
+  ],
+  "metric-s": [
+    "0.875rem",
+    {
+      "lineHeight": "1.30",
+      "letterSpacing": "0",
+      "fontWeight": "400"
+    }
+  ],
+  "code": [
+    "0.8125rem",
+    {
+      "lineHeight": "1.60",
+      "letterSpacing": "0",
+      "fontWeight": "400"
+    }
+  ]
+} as const;
+
 export const fontFamily = {
   display: ['var(--font-display)'],
   body: ['var(--font-body)'],
