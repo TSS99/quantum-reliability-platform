@@ -13,7 +13,7 @@ from app.domain.invariants import (
 )
 from app.schemas.common import StatisticalConfidence
 from app.schemas.quantity import Quantity
-from app.schemas.reason_codes import Finding
+from app.domain.reason_codes import Finding
 
 ExecutionMode = Literal["demo_replay", "local_simulation", "hardware"]
 
