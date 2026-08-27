@@ -1,0 +1,77 @@
+# gitleaks config for QRP — see docs/SECURITY.md §6.
+# Picked up automatically by gitleaks-action (ci.yml, `security` job) and by a local
+# `gitleaks detect --config .gitleaks.toml --redact --verbose`.
+
+title = "QRP"
+
+# Keep the upstream ruleset (AWS, GitHub/GitLab tokens, private keys, generic
+# high-entropy assignments) and add what is specific to this repo.
+[extend]
+useDefault = true
+
+# --- Layer 2 of the secret-safety architecture (RECON-29) -------------------
+# Anything named VITE_* is inlined into the public bundle by Vite. A VITE_ variable
+# whose name says "secret" is a secret that has been published.
+[[rules]]
+id = "qrp-vite-secret-var"
+description = "VITE_* env var named like a credential — Vite inlines it into the public bundle"
+regex = '''(?i)VITE_[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)[A-Z0-9_]*\s*[:=]\s*\S+'''
+keywords = ["vite_"]
+tags = ["qrp", "frontend", "bundle"]
+
+# --- Provider credentials (MISSION.md §13) ---------------------------------
+[[rules]]
+id = "qrp-ibm-quantum-token"
+description = "IBM Quantum / Qiskit Runtime API token (64 hex chars)"
+regex = '''(?i)(?:ibm|ibmq|qiskit)[a-z0-9_.\-]{0,24}(?:token|api[_.\-]?key)[a-z0-9_.\-]{0,8}["'\s]{0,3}[:=]["'\s]{0,3}([a-f0-9]{64})'''
+secretGroup = 1
+keywords = ["ibm", "ibmq", "qiskit"]
+tags = ["qrp", "provider"]
+
+[[rules]]
+id = "qrp-ionq-api-key"
+description = "IonQ API key"
+regex = '''(?i)ionq[a-z0-9_.\-]{0,24}(?:token|api[_.\-]?key)[a-z0-9_.\-]{0,8}["'\s]{0,3}[:=]["'\s]{0,3}["']?([A-Za-z0-9]{32,64})["']?'''
+secretGroup = 1
+keywords = ["ionq"]
+tags = ["qrp", "provider"]
+
+[[rules]]
+id = "qrp-quantinuum-credential"
+description = "Quantinuum / Azure Quantum credential"
+regex = '''(?i)(?:quantinuum|honeywell|azure[_.\-]?quantum)[a-z0-9_.\-]{0,24}(?:token|password|api[_.\-]?key|secret)[a-z0-9_.\-]{0,8}["'\s]{0,3}[:=]["'\s]{0,3}["']?([A-Za-z0-9._\-]{16,128})["']?'''
+secretGroup = 1
+keywords = ["quantinuum", "honeywell", "azure_quantum", "azure-quantum"]
+tags = ["qrp", "provider"]
+
+# Catch-all for the provider shapes the specific rules above miss: a quoted value of
+# real length assigned to a provider-named variable.
+[[rules]]
+id = "qrp-generic-provider-secret"
+description = "Quoted secret assigned to a quantum-provider-named variable"
+regex = '''(?i)(?:provider|backend|qpu|braket|rigetti|iqm|pasqal)[a-z0-9_.\-]{0,24}(?:token|secret|password|api[_.\-]?key|credential)[a-z0-9_.\-]{0,8}["'\s]{0,3}[:=]["'\s]{0,3}["']([A-Za-z0-9._\-/+]{20,128})["']'''
+secretGroup = 1
+entropy = 3.0
+keywords = ["provider", "backend", "qpu", "braket", "rigetti", "iqm", "pasqal"]
+tags = ["qrp", "provider"]
+
+# --- Allowlist -------------------------------------------------------------
+# Deliberately narrow. An allowlisted directory is a directory where a real secret can
+# hide — do NOT add blanket path entries (fixtures especially). See docs/SECURITY.md §6.
+[allowlist]
+description = "Placeholders, lockfiles, and the two files that quote these very regexes"
+paths = [
+  '''^\.env\.example$''',
+  '''^\.gitleaks\.toml$''',
+  '''^docs/SECURITY\.md$''',
+  '''^package-lock\.json$''',
+]
+regexes = [
+  '''(?i)(?:your[_\- ]?|my[_\- ]?)?(?:example|placeholder|changeme|change[_\-]?me|replace[_\-]?me|dummy|fake|sample|redacted|xxxx+|<[a-z_\- ]+>|\$\{[a-z_]+\})''',
+]
+stopwords = [
+  "example",
+  "placeholder",
+  "changeme",
+  "notarealtoken",
+]
