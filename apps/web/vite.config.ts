@@ -8,6 +8,7 @@ export default defineConfig(() => ({
   base: process.env.VITE_BASE_PATH ?? '/',
   plugins: [react()],
   test: {
+    pool: 'threads',
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],

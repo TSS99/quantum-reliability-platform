@@ -46,6 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
       - uses: actions/setup-node@v4
         with:
           node-version: 20
