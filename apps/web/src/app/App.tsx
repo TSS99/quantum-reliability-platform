@@ -5,6 +5,12 @@ import { Landing } from '../pages/Landing';
 import { Overview } from '../pages/Overview';
 import { NewAnalysis } from '../pages/NewAnalysis';
 import { QecLab } from '../pages/QecLab';
+import { Hardware } from '../pages/Hardware';
+import { Strategies } from '../pages/Strategies';
+import { Workloads } from '../pages/Workloads';
+import { Experiments } from '../pages/Experiments';
+import { Integrations } from '../pages/Integrations';
+import { Settings } from '../pages/Settings';
 import { Placeholder } from '../pages/Placeholder';
 import { ROUTES } from './nav';
 import type { JSX } from 'react';
@@ -14,7 +20,13 @@ import type { JSX } from 'react';
 const PAGES: Record<string, JSX.Element> = {
   '/overview': <Overview />,
   '/new-analysis': <NewAnalysis />,
+  '/workloads': <Workloads />,
+  '/hardware': <Hardware />,
+  '/strategies': <Strategies />,
   '/qec-lab': <QecLab />,
+  '/experiments': <Experiments />,
+  '/integrations': <Integrations />,
+  '/settings': <Settings />,
 };
 const appRoutes: RouteObject[] = ROUTES.map((r) => ({
   path: r.path,

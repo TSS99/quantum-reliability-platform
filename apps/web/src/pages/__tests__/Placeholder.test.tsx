@@ -8,14 +8,15 @@ import { ROUTES } from '../../app/nav';
 // no "coming soon" spinner. It names the route and states the surface is not built yet.
 describe('Placeholder', () => {
   it('shows the honest empty state, naming the current route', () => {
-    const planned = ROUTES.find((r) => !r.implemented);
-    expect(planned).toBeDefined();
+    // Every route is implemented now, so the Placeholder is the fallback surface; rendered at a
+    // known route path it still names that route and states plainly that it is not built.
+    const route = ROUTES[0]!;
     render(
-      <MemoryRouter initialEntries={[planned!.path]}>
+      <MemoryRouter initialEntries={[route.path]}>
         <Placeholder />
       </MemoryRouter>,
     );
-    expect(screen.getByRole('heading', { name: planned!.label })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: route.label })).toBeInTheDocument();
     expect(screen.getByText(/not built yet/i)).toBeInTheDocument();
     expect(screen.getByText(/intentionally empty/i)).toBeInTheDocument();
     // Must not fabricate data: no table/list rows, no numeric metrics rendered.
