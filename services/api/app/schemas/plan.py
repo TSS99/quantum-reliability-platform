@@ -12,10 +12,10 @@ from app.domain.invariants import (
     check_overhead_ratio,
     check_rmse,
 )
+from app.domain.reason_codes import Finding
 from app.schemas.common import StatisticalConfidence, StrategyConfidence
 from app.schemas.goal import ScoreWeights
 from app.schemas.quantity import Quantity
-from app.domain.reason_codes import Finding
 from app.schemas.strategy import MitigationStrategy
 
 

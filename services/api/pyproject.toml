@@ -10,11 +10,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3", "httpx>=0.27", "ruff>=0.7"]
+dev = ["pytest>=8.3", "httpx>=0.27", "ruff==0.15.2"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
+# Explicit selection so lint behaviour is identical locally and in CI regardless of
+# which default rule set a newer ruff ships with.
+select = ["E", "F", "I"]
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

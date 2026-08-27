@@ -1,7 +1,7 @@
 """Schema round-trips for representative Flow-A objects, built from the shared factories."""
-from app.schemas.workload import QuantumWorkload
 from app.schemas.plan import ExecutionPlan
 from app.schemas.receipt import ReliabilityReceipt
+from app.schemas.workload import QuantumWorkload
 from tests import factories as fac
 
 

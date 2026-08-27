@@ -20,8 +20,8 @@ import stim
 
 from app.qec import statistics
 from app.qec.config import (
-    SimulationConfig,
     THRESHOLD_SEMANTICS,
+    SimulationConfig,
     physical_qubits,
     validate,
 )

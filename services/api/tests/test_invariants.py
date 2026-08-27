@@ -1,5 +1,6 @@
 """Domain invariants I-1..I-12 / MISSION §46 — tested directly on the shared validator."""
 import pytest
+
 from app.domain import invariants as inv
 
 
