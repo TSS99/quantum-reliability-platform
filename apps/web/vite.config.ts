@@ -14,7 +14,7 @@ export default defineConfig(() => ({
     css: true,
     // Vitest owns unit/component tests only; Playwright owns e2e/ (its .spec.ts
     // would otherwise be picked up by vitest's default glob).
-    include: ['tests/**/*.{test,spec}.{ts,tsx}'],
+    include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
   },
 }));

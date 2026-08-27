@@ -1,10 +1,22 @@
 import { RouterProvider, type RouteObject } from 'react-router-dom';
 import { createRouter } from './createRouter';
-import { Home } from '../pages/Home';
+import { Layout } from './Layout';
+import { Landing } from '../pages/Landing';
+import { Overview } from '../pages/Overview';
+import { Placeholder } from '../pages/Placeholder';
+import { ROUTES } from './nav';
 
-// RECON-22: nav renders only implemented routes; this is the trivial hello route the rest
-// of the 9-route IA (UX_MAP.md) grows from — Frontend owns adding the remaining routes.
-const routes: RouteObject[] = [{ path: '/', element: <Home /> }];
+// Landing "/" is public and outside the app shell. The 9-route IA (RECON-22) lives under the
+// Layout; only Overview is implemented this phase — the rest render an honest Placeholder.
+const appRoutes: RouteObject[] = ROUTES.map((r) => ({
+  path: r.path,
+  element: r.path === '/overview' ? <Overview /> : <Placeholder />,
+}));
+
+const routes: RouteObject[] = [
+  { path: '/', element: <Landing /> },
+  { element: <Layout />, children: appRoutes },
+];
 
 const router = createRouter(routes);
 

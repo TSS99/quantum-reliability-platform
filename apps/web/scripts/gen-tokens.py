@@ -12,8 +12,8 @@ def emit_colors(theme):
         lines.append(f"  {cssvar(k)}: {v};")
     return "\n".join(lines)
 
-spacing = "\n".join(f"  --space-{k.replace('.','_')}: {v};" for k, v in tok["spacing"].items())
-radius = "\n".join(f"  --radius-{k}: {v};" for k, v in tok["radius"].items())
+spacing = "\n".join(f"  --space-{k.replace('.','_')}: {v};" for k, v in tok["spacing"].items() if not k.startswith("$"))
+radius = "\n".join(f"  --radius-{k}: {v};" for k, v in tok["radius"].items() if not k.startswith("$"))
 motion = "\n".join(f"  --dur-{k.replace('.','-')}: {v};" for k, v in tok["motion"]["duration"].items())
 fam = tok["typography"]["family"]
 
@@ -56,8 +56,8 @@ print("wrote", dest, "-", len(out), "bytes")
 # coexist. Tailwind classes read bg-bg-surface / text-text-primary / text-state-critical.
 import json as _json
 colors = {k.replace(".", "-"): f"var({cssvar(k)})" for k in tok["color"]["dark"].keys()}
-spacing_map = {k: f"var(--space-{k.replace('.','_')})" for k in tok["spacing"]}
-radius_map = {k: f"var(--radius-{k})" for k in tok["radius"]}
+spacing_map = {k: f"var(--space-{k.replace('.','_')})" for k in tok["spacing"] if not k.startswith("$")}
+radius_map = {k: f"var(--radius-{k})" for k in tok["radius"] if not k.startswith("$")}
 
 font_size = {}
 for k, s in tok["typography"]["scale"].items():

@@ -42,7 +42,6 @@ export const colors = {
 } as const;
 
 export const spacing = {
-  "$comment": "var(--space-$comment)",
   "0": "var(--space-0)",
   "0.5": "var(--space-0_5)",
   "1": "var(--space-1)",
@@ -60,7 +59,6 @@ export const spacing = {
 } as const;
 
 export const borderRadius = {
-  "$comment": "var(--radius-$comment)",
   "none": "var(--radius-none)",
   "control": "var(--radius-control)",
   "card": "var(--radius-card)",
