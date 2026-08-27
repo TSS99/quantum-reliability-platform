@@ -17,11 +17,11 @@ export interface NavRoute {
 // the landing page "/" is public and deliberately not a nav item).
 export const ROUTES: NavRoute[] = [
   { path: '/overview',     label: 'Overview',     group: 'Plan',        Icon: LayoutDashboard,   implemented: true },
-  { path: '/new-analysis', label: 'New Analysis', group: 'Plan',        Icon: FlaskConical,      implemented: false },
+  { path: '/new-analysis', label: 'New Analysis', group: 'Plan',        Icon: FlaskConical,      implemented: true },
   { path: '/workloads',    label: 'Workloads',    group: 'Plan',        Icon: Boxes,             implemented: false },
   { path: '/hardware',     label: 'Hardware',     group: 'Hardware',    Icon: Cpu,               implemented: false },
   { path: '/strategies',   label: 'Strategies',   group: 'Reliability', Icon: SlidersHorizontal, implemented: false },
-  { path: '/qec-lab',      label: 'QEC Lab',      group: 'Reliability', Icon: Grid3x3,           implemented: false },
+  { path: '/qec-lab',      label: 'QEC Lab',      group: 'Reliability', Icon: Grid3x3,           implemented: true },
   { path: '/experiments',  label: 'Experiments',  group: 'Evidence',    Icon: ScrollText,        implemented: false },
   { path: '/integrations', label: 'Integrations', group: 'System',      Icon: PlugZap,           implemented: false },
   { path: '/settings',     label: 'Settings',     group: 'System',      Icon: Settings,          implemented: false },

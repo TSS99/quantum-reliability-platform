@@ -43,3 +43,11 @@
     }
   }
 }
+
+@layer utilities {
+  /* Chart line draw-in (ThresholdPlot / Pareto). Reduced-motion handled globally above. */
+  @keyframes qrp-draw {
+    from { stroke-dashoffset: 1200; }
+    to { stroke-dashoffset: 0; }
+  }
+}
