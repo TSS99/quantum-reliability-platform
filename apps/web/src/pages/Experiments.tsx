@@ -155,6 +155,29 @@ export function Experiments() {
           </Card>
         )}
       </div>
+
+      <section aria-labelledby="cmp-h">
+        <h2 id="cmp-h" className="mb-2 text-eyebrow uppercase text-text-secondary">Run comparison — mitigation improvement</h2>
+        <Card className="p-4">
+          <div className="flex flex-col gap-2">
+            {runs.map((r) => {
+              const imp = Math.max(0, 1 - r.plan.rmse.value / r.rawError);
+              return (
+                <div key={r.runId} className="grid grid-cols-[130px_1fr_auto] items-center gap-3 text-body-s">
+                  <span className="truncate text-text-secondary">{r.workloadName}</span>
+                  <div className="h-2 rounded-full bg-bg-raised" role="img" aria-label={r.workloadName + ' improvement ' + (imp * 100).toFixed(0) + '%'}>
+                    <div className="h-2 rounded-full bg-series-mitigated transition-all" style={{ width: (imp * 100).toFixed(0) + '%' }} />
+                  </div>
+                  <span className="metric w-32 text-right text-text-primary">
+                    {(imp * 100).toFixed(0)}% <span className="text-text-muted">·</span> {money(r.plan.estimated_cost_usd.value)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-caption text-text-muted">Error reduction versus the raw baseline for each recommended run — illustrative demo data.</p>
+        </Card>
+      </section>
     </div>
   );
 }
