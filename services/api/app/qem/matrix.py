@@ -102,10 +102,13 @@ def _leaf(cond: dict[str, Any], context: dict[str, Any], missing: set[str]) -> b
 
 
 def _matches(cond: dict[str, Any], context: dict[str, Any], missing: set[str]) -> bool:
+    # Short-circuits deliberately: a branch that conjunction/disjunction never reaches must not
+    # report its fields as missing. `max_circuit_depth: null` means "no declared limit", and the
+    # depth rule guarded behind it is simply not asked.
     if "all" in cond:
-        return all([_matches(c, context, missing) for c in cond["all"]])
+        return all(_matches(c, context, missing) for c in cond["all"])
     if "any" in cond:
-        return any([_matches(c, context, missing) for c in cond["any"]])
+        return any(_matches(c, context, missing) for c in cond["any"])
     return _leaf(cond, context, missing)
 
 
