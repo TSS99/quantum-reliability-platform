@@ -46,7 +46,6 @@
   --font-body: "Inter", "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --space-$comment: 4px base, dense-dashboard scale. Named by step so density can be retuned in one place.;
   --space-0: 0;
   --space-0_5: 0.125rem;
   --space-1: 0.25rem;
@@ -61,7 +60,6 @@
   --space-12: 3rem;
   --space-16: 4rem;
   --space-24: 6rem;
-  --radius-$comment: Container radius is NEVER semantic — shape is a status channel and must not be diluted. Low radii throughout: the instrument reads machined, not soft.;
   --radius-none: 0;
   --radius-control: 0.125rem;
   --radius-card: 0.25rem;
