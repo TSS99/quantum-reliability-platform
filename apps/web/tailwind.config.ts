@@ -1,10 +1,18 @@
 import type { Config } from 'tailwindcss';
+import { colors, spacing, borderRadius, fontFamily } from './src/styles/tailwind-tokens';
 
+// Colors/spacing/radius/fonts are GENERATED from docs/data/design_tokens.json
+// (see src/styles/tailwind-tokens.ts). They resolve to CSS vars, so a [data-theme]
+// switch on <html> retints the whole app with no rebuild.
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
-  darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      colors,
+      spacing,
+      borderRadius,
+      fontFamily,
+    },
   },
   plugins: [],
 } satisfies Config;
