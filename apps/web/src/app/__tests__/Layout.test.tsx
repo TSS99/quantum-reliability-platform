@@ -24,7 +24,8 @@ describe('Layout nav', () => {
     expect(ROUTES.length).toBe(9);
 
     for (const group of NAV_GROUPS) {
-      expect(within(nav).getByText(group)).toBeInTheDocument();
+      // group headers are tagged so they don't collide with a same-named route (e.g. "Hardware")
+      expect(within(nav).getByText(group, { selector: '[data-nav-group]' })).toBeInTheDocument();
     }
     for (const route of ROUTES) {
       expect(within(nav).getByRole('link', { name: new RegExp(route.label, 'i') })).toBeInTheDocument();
