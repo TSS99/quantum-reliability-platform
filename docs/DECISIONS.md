@@ -132,7 +132,7 @@ honesty mechanism (RECON-4 generates `DEMO_VS_REAL.md` from it); diluting it acr
 integers weakens the signal it carries.
 **Consequence:** the shared validator (invariants I-1..I-3) checks units only on `Quantity` fields;
 structural integers get plain range validation (`>= 0`).
-**Status:** Proposed — refines RECON-3 without contradicting it; god to confirm at integration.
+**Status:** Accepted (god confirmed at integration 2026-08-27).
 
 ## ADR-0012 — 2026-08-27 — `POST /api/v1/experiments` added to the §50 endpoint list
 **Decision:** Add `POST /api/v1/experiments` (execute an `ExecutionPlan` → `ExperimentRun`, returning the
@@ -141,4 +141,4 @@ structural integers get plain range validation (`>= 0`).
 to *create* a run, while Flow A step 8 requires one before a receipt can exist. The endpoint has a real
 consumer (§50's own rule), and the alternative — a receipt endpoint that manufactures runs as a side
 effect — would break §32 lineage and hide `execution_mode`.
-**Status:** Proposed — god to confirm at integration.
+**Status:** Accepted (god confirmed at integration 2026-08-27).
