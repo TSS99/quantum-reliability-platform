@@ -23,7 +23,7 @@ export function Layout() {
         <nav aria-label="Primary" className="px-2 py-3">
           {NAV_GROUPS.map((group) => (
             <div key={group} className="mb-3">
-              <div className="px-2 py-1 text-eyebrow uppercase text-text-muted">{group}</div>
+              <div data-nav-group={group} className="px-2 py-1 text-eyebrow uppercase text-text-muted">{group}</div>
               <ul>
                 {ROUTES.filter((r) => r.group === group).map((r) => {
                   const { Icon } = r;
