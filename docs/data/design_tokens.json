@@ -1,0 +1,257 @@
+{
+  "$comment": "QRP design tokens — single source of truth for Frontend's Tailwind wiring. Values only; no framework config here. Authored by UX Director, Phase 2. See docs/DESIGN_SYSTEM.md for the reasoning behind every value.",
+  "schema_version": "1.0.0",
+  "meta": {
+    "direction": "Signal Bench",
+    "theme_policy": "dark-first, light at parity (RECON-27). Neither theme is derived from the other; both are authored.",
+    "hue_policy": "Hue is reserved for MEANING. Interactive affordances carry no hue — they are expressed by luminance, weight and border. This is what keeps the 7 semantic states legible inside a finite hue budget.",
+    "contrast_targets": { "text": 4.5, "non_text_and_focus": 3.0, "adjacent_co_occurring_series_luminance": 1.4 },
+    "contrast_reference_bg": { "dark": "#0B0F0E", "light": "#F4F7F5" }
+  },
+
+  "color": {
+    "dark": {
+      "bg.sunken":        "#070A09",
+      "bg.base":          "#0B0F0E",
+      "bg.surface":       "#121816",
+      "bg.raised":        "#1A221F",
+      "bg.overlay":       "#0B0F0EE6",
+
+      "border.hairline":  "#202927",
+      "border.control":   "#5A6A65",
+      "border.strong":    "#7A8A85",
+
+      "text.primary":     "#E8EFEC",
+      "text.secondary":   "#A7B5B0",
+      "text.muted":       "#7A8A85",
+      "text.inverse":     "#0B0F0E",
+
+      "action.bg":         "#E8EFEC",
+      "action.fg":         "#0B0F0E",
+      "action.hover":      "#FFFFFF",
+      "action.active":     "#CFD9D5",
+      "action.disabled.bg":"#1A221F",
+      "action.disabled.fg":"#5A6A65",
+
+      "focus.inner":      "#0B0F0E",
+      "focus.outer":      "#F2F7F5",
+
+      "row.hover":        "#1A221F",
+      "row.selected":     "#232D2A",
+      "row.selected.bar": "#E8EFEC",
+
+      "state.healthy":    "#3FBF8F",
+      "state.warning":    "#E0A32E",
+      "state.critical":   "#FF6B7A",
+      "state.uncertain":  "#7E8B86",
+      "series.raw":       "#C3CEC9",
+      "series.mitigated": "#26BCC6",
+      "series.logical":   "#A06BE0",
+
+      "state.healthy.bg":   "#0F2620",
+      "state.warning.bg":   "#2A2009",
+      "state.critical.bg":  "#2E1418",
+      "state.uncertain.bg": "#1A1F1D",
+
+      "rail.trace":       "#26BCC6",
+      "rail.trace.raw":   "#C3CEC9",
+      "rail.graticule":   "#182220",
+      "rail.plate":       "#080C0B"
+    },
+    "light": {
+      "bg.sunken":        "#E7ECE9",
+      "bg.base":          "#F4F7F5",
+      "bg.surface":       "#FFFFFF",
+      "bg.raised":        "#FFFFFF",
+      "bg.overlay":       "#F4F7F5E6",
+
+      "border.hairline":  "#DBE2DE",
+      "border.control":   "#808E89",
+      "border.strong":    "#5F6C67",
+
+      "text.primary":     "#101614",
+      "text.secondary":   "#46524E",
+      "text.muted":       "#5F6C67",
+      "text.inverse":     "#F4F7F5",
+
+      "action.bg":         "#101614",
+      "action.fg":         "#F4F7F5",
+      "action.hover":      "#29332F",
+      "action.active":     "#000000",
+      "action.disabled.bg":"#E7ECE9",
+      "action.disabled.fg":"#98A5A0",
+
+      "focus.inner":      "#FFFFFF",
+      "focus.outer":      "#101614",
+
+      "row.hover":        "#EDF2EF",
+      "row.selected":     "#E2EAE6",
+      "row.selected.bar": "#101614",
+
+      "state.healthy":    "#0E7A57",
+      "state.warning":    "#8A5A05",
+      "state.critical":   "#B3243C",
+      "state.uncertain":  "#5C6A65",
+      "series.raw":       "#2B3733",
+      "series.mitigated": "#087B82",
+      "series.logical":   "#6832B8",
+
+      "state.healthy.bg":   "#E1F1EA",
+      "state.warning.bg":   "#F6ECD9",
+      "state.critical.bg":  "#FAE4E8",
+      "state.uncertain.bg": "#EAEEEC",
+
+      "rail.trace":       "#087B82",
+      "rail.trace.raw":   "#2B3733",
+      "rail.graticule":   "#E2E8E5",
+      "rail.plate":       "#FFFFFF"
+    }
+  },
+
+  "semantic_state": {
+    "$comment": "RECON-27: colour is NEVER the only channel. Every state below carries icon + shape + text label, and charts add dash/marker. `scale` matters: status states and series identities are two different scales and must never share one legend.",
+    "healthy":   { "scale": "status", "color_token": "state.healthy",    "icon": "circle-check",      "shape": "circle",         "fill_pattern": "solid", "label": "Healthy",   "chart_dash": null,        "chart_marker": null },
+    "warning":   { "scale": "status", "color_token": "state.warning",    "icon": "triangle-alert",    "shape": "triangle",       "fill_pattern": "solid", "label": "Warning",   "chart_dash": null,        "chart_marker": null },
+    "critical":  { "scale": "status", "color_token": "state.critical",   "icon": "octagon-x",         "shape": "octagon",        "fill_pattern": "solid", "label": "Critical",  "chart_dash": null,        "chart_marker": null },
+    "uncertain": { "scale": "status", "color_token": "state.uncertain",  "icon": "help-circle-dashed","shape": "dashed-circle",  "fill_pattern": "hatch-45", "label": "Uncertain","chart_dash": null,        "chart_marker": null },
+    "raw":       { "scale": "series", "color_token": "series.raw",       "icon": "wave-raw",          "shape": "circle-outline", "fill_pattern": "none",  "label": "Raw",       "chart_dash": "6 3",       "chart_marker": "circle" },
+    "mitigated": { "scale": "series", "color_token": "series.mitigated", "icon": "wave-damped",       "shape": "square",         "fill_pattern": "solid", "label": "Mitigated", "chart_dash": null,        "chart_marker": "square" },
+    "logical":   { "scale": "series", "color_token": "series.logical",   "icon": "lattice-cell",      "shape": "diamond",        "fill_pattern": "solid", "label": "Logical",   "chart_dash": "10 4 2 4",  "chart_marker": "diamond" }
+  },
+
+  "typography": {
+    "family": {
+      "display": "\"Space Grotesk\", \"IBM Plex Sans\", system-ui, sans-serif",
+      "body":    "\"Inter\", \"IBM Plex Sans\", system-ui, sans-serif",
+      "mono":    "\"JetBrains Mono\", \"IBM Plex Mono\", ui-monospace, SFMono-Regular, monospace"
+    },
+    "mono_policy": "Mono is permitted ONLY for: numeric metrics, identifiers (backend_id, circuit_fingerprint, calibration_snapshot_id, run ids), code/QASM, and chart axis tick values. Never for headings, button text, labels or prose.",
+    "numeric": { "font_variant_numeric": "tabular-nums", "applies_to": "every metric, every numeric table column, every axis tick" },
+    "scale": {
+      "display.l": { "family": "display", "size": "2rem",      "line": "1.15", "weight": 600, "tracking": "-0.02em" },
+      "display.m": { "family": "display", "size": "1.5rem",    "line": "1.20", "weight": 600, "tracking": "-0.015em" },
+      "heading.l": { "family": "display", "size": "1.25rem",   "line": "1.30", "weight": 600, "tracking": "-0.01em" },
+      "heading.m": { "family": "body",    "size": "1rem",      "line": "1.40", "weight": 600, "tracking": "0" },
+      "eyebrow":   { "family": "body",    "size": "0.8125rem", "line": "1.40", "weight": 600, "tracking": "0.08em", "transform": "uppercase" },
+      "body.m":    { "family": "body",    "size": "1rem",      "line": "1.50", "weight": 400, "tracking": "0" },
+      "body.s":    { "family": "body",    "size": "0.875rem",  "line": "1.45", "weight": 400, "tracking": "0" },
+      "caption":   { "family": "body",    "size": "0.75rem",   "line": "1.40", "weight": 400, "tracking": "0.01em" },
+      "metric.xl": { "family": "mono",    "size": "2rem",      "line": "1.10", "weight": 500, "tracking": "-0.01em" },
+      "metric.l":  { "family": "mono",    "size": "1.5rem",    "line": "1.15", "weight": 500, "tracking": "-0.01em" },
+      "metric.m":  { "family": "mono",    "size": "1.125rem",  "line": "1.25", "weight": 500, "tracking": "0" },
+      "metric.s":  { "family": "mono",    "size": "0.875rem",  "line": "1.30", "weight": 400, "tracking": "0" },
+      "code":      { "family": "mono",    "size": "0.8125rem", "line": "1.60", "weight": 400, "tracking": "0" }
+    }
+  },
+
+  "spacing": {
+    "$comment": "4px base, dense-dashboard scale. Named by step so density can be retuned in one place.",
+    "0": "0", "0.5": "0.125rem", "1": "0.25rem", "1.5": "0.375rem", "2": "0.5rem",
+    "3": "0.75rem", "4": "1rem", "5": "1.25rem", "6": "1.5rem", "8": "2rem",
+    "10": "2.5rem", "12": "3rem", "16": "4rem", "24": "6rem"
+  },
+
+  "radius": {
+    "$comment": "Container radius is NEVER semantic — shape is a status channel and must not be diluted. Low radii throughout: the instrument reads machined, not soft.",
+    "none": "0", "control": "0.125rem", "card": "0.25rem", "modal": "0.375rem", "chip": "0.1875rem"
+  },
+
+  "border": {
+    "hairline": "1px", "control": "1px", "emphasis": "2px", "double": "3px double"
+  },
+
+  "elevation": {
+    "$comment": "Dark cannot use drop shadows against near-black — elevation there is a surface-luminance step plus a hairline. Light uses shadow. Each level is a TRIPLE resolved per theme.",
+    "0": { "dark":  { "surface": "bg.base",    "border": "none",            "shadow": "none" },
+           "light": { "surface": "bg.base",    "border": "none",            "shadow": "none" } },
+    "1": { "dark":  { "surface": "bg.surface", "border": "border.hairline", "shadow": "none" },
+           "light": { "surface": "bg.surface", "border": "border.hairline", "shadow": "0 1px 2px rgba(16,22,20,0.06)" } },
+    "2": { "dark":  { "surface": "bg.raised",  "border": "border.hairline", "shadow": "none" },
+           "light": { "surface": "bg.surface", "border": "border.hairline", "shadow": "0 2px 8px rgba(16,22,20,0.10)" } },
+    "3": { "dark":  { "surface": "bg.raised",  "border": "border.control",  "shadow": "0 8px 24px rgba(0,0,0,0.55)" },
+           "light": { "surface": "bg.surface", "border": "border.hairline", "shadow": "0 8px 24px rgba(16,22,20,0.16)" } }
+  },
+
+  "focus": {
+    "$comment": "Theme-agnostic double ring. Always >=3:1 on every surface in both themes, because one of the two rings always contrasts.",
+    "style": "0 0 0 2px var(--focus-inner), 0 0 0 4px var(--focus-outer)",
+    "offset": "0"
+  },
+
+  "motion": {
+    "duration": { "instant": "0ms", "fast": "120ms", "base": "200ms", "slow": "320ms", "rail.stage": "480ms", "rail.series_morph": "640ms" },
+    "easing": {
+      "standard": "cubic-bezier(0.2, 0, 0, 1)",
+      "exit":     "cubic-bezier(0.4, 0, 1, 1)",
+      "trace":    "cubic-bezier(0.33, 0, 0.15, 1)"
+    },
+    "forbidden": [
+      "overshoot / back-out easing anywhere in data UI",
+      "ambient or idle looping motion",
+      "animating width/height or top/left (transform and opacity only)",
+      "any state conveyed by motion alone"
+    ],
+    "reduced_motion": {
+      "duration_override": "0ms",
+      "allowed_exception": "opacity crossfade up to 120ms",
+      "rail": "renders as a static stepper with identical stages, states, labels and bound values"
+    }
+  },
+
+  "breakpoints": {
+    "$comment": "Mobile-first. Names match the MISSION ~375/768/1024/1440 set.",
+    "xs": "375px", "md": "768px", "lg": "1024px", "xl": "1440px",
+    "grid_columns": { "xs": 4, "md": 8, "lg": 12, "xl": 12 },
+    "gutter":       { "xs": "1rem", "md": "1.25rem", "lg": "1.5rem", "xl": "1.5rem" },
+    "content_max":  { "xs": "100%", "md": "100%", "lg": "1024px", "xl": "1280px" }
+  },
+
+  "chart": {
+    "$comment": "Six archetypes, capped. Encoding rules in DESIGN_SYSTEM.md §6; the ramps live here.",
+    "archetypes": ["reliability-curve", "pareto-front", "coupling-map", "error-heatmap", "calibration-timeline", "threshold-plot"],
+    "max_series_before_small_multiples": 4,
+    "sequential": {
+      "$comment": "Monotonically increasing luminance in dark, monotonically decreasing in light. CI verifies monotonicity.",
+      "dark":  ["#0F1D1F", "#123338", "#0F4A52", "#0C626C", "#187C86", "#3E96A0", "#6FB2B9"],
+      "light": ["#E3EFF0", "#C2DEE1", "#9BCACF", "#6FB2B9", "#43949D", "#1E7680", "#0A5860"]
+    },
+    "diverging": {
+      "$comment": "Signed deltas only, anchored at zero, zero tick always drawn. Centre stop is the neutral surface.",
+      "dark":  ["#3FBF8F", "#7FD2B4", "#B9E3D4", "#2A3330", "#F3B9BF", "#FF9AA5", "#FF6B7A"],
+      "light": ["#0E7A57", "#4E9E7F", "#96C4B0", "#DDE3E0", "#E3A2AC", "#C95E70", "#B3243C"]
+    },
+    "categorical": {
+      "$comment": "Non-semantic grouping only (e.g. several backends). Capped at 6; shape and dash carry identity first, hue is redundant reinforcement.",
+      "dark":  ["#6FB2B9", "#C8A15E", "#8FA0D8", "#7FBF8F", "#C98FA8", "#9AA5A0"],
+      "light": ["#2A7A82", "#8A6520", "#4A5A9E", "#3B7A4E", "#8E4A64", "#5F6C67"],
+      "markers": ["circle", "square", "diamond", "triangle", "cross", "star"],
+      "dashes":  [null, "6 3", "2 3", "10 4 2 4", "1 3", "8 3 1 3"]
+    },
+    "grid": { "dark": "#182220", "light": "#E2E8E5" },
+    "axis": { "dark": "#7A8A85", "light": "#66736E" }
+  },
+
+  "rail": {
+    "$comment": "Signature element (RECON-23). Full visual spec in DESIGN_SYSTEM.md §5.",
+    "stages": ["circuit", "hardware", "noise", "strategy", "execution", "verification"],
+    "stage_glyph": {
+      "circuit": "gate-ladder", "hardware": "coupling-lattice", "noise": "band-waveform",
+      "strategy": "branch-select", "execution": "step-marker", "verification": "sealed-receipt"
+    },
+    "stage_state_encoding": {
+      "pending":  { "border": "hairline", "fill": "none",              "glyph_opacity": 0.4, "label_weight": 400, "extra": null },
+      "active":   { "border": "control",  "fill": "bg.raised",         "glyph_opacity": 1.0, "label_weight": 600, "extra": "2px inset bar on the node's bottom edge" },
+      "complete": { "border": "control",  "fill": "bg.raised",         "glyph_opacity": 1.0, "label_weight": 500, "extra": "solid 2px rule under the node" },
+      "blocked":  { "border": "double",   "fill": "state.critical.bg", "glyph_opacity": 1.0, "label_weight": 600, "extra": "glyph replaced by slashed-square; reason code rendered as text" }
+    },
+    "node_size": { "xs": "24px", "md": "26px", "lg": "28px" },
+    "height":    { "xs": "auto (vertical stepper)", "md": "72px", "lg": "96px" },
+    "trace": {
+      "$comment": "The connecting segment is a live trace whose amplitude encodes residual error — DATA-BOUND, not decoration.",
+      "amplitude_max_px": 14,
+      "stroke_width_px": 2,
+      "bind": "clamp(1 - ExecutionPlan.reliability_estimate, 0, 1) * amplitude_max_px"
+    },
+    "constraint_band_height": "32px"
+  }
+}
