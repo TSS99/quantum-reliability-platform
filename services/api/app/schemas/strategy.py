@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, model_validator
 
-from app.schemas.reason_codes import ReasonCode
+from app.domain.reason_codes import ReasonCode
 
 
 class Compatibility(BaseModel):

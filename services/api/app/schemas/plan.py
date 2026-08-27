@@ -15,7 +15,7 @@ from app.domain.invariants import (
 from app.schemas.common import StatisticalConfidence, StrategyConfidence
 from app.schemas.goal import ScoreWeights
 from app.schemas.quantity import Quantity
-from app.schemas.reason_codes import Finding
+from app.domain.reason_codes import Finding
 from app.schemas.strategy import MitigationStrategy
 
 
