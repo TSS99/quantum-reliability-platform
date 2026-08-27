@@ -1,0 +1,163 @@
+/* GENERATED from docs/data/design_tokens.json — do not edit by hand.
+   Regenerate via scripts/gen-tokens (design tokens are the source of truth). */
+
+/* Dark-first: :root carries the dark palette (RECON-27). */
+:root {
+  --color-bg-sunken: #070A09;
+  --color-bg-base: #0B0F0E;
+  --color-bg-surface: #121816;
+  --color-bg-raised: #1A221F;
+  --color-bg-overlay: #0B0F0EE6;
+  --color-border-hairline: #202927;
+  --color-border-control: #5A6A65;
+  --color-border-strong: #7A8A85;
+  --color-text-primary: #E8EFEC;
+  --color-text-secondary: #A7B5B0;
+  --color-text-muted: #7A8A85;
+  --color-text-inverse: #0B0F0E;
+  --color-action-bg: #E8EFEC;
+  --color-action-fg: #0B0F0E;
+  --color-action-hover: #FFFFFF;
+  --color-action-active: #CFD9D5;
+  --color-action-disabled-bg: #1A221F;
+  --color-action-disabled-fg: #5A6A65;
+  --color-focus-inner: #0B0F0E;
+  --color-focus-outer: #F2F7F5;
+  --color-row-hover: #1A221F;
+  --color-row-selected: #232D2A;
+  --color-row-selected-bar: #E8EFEC;
+  --color-state-healthy: #3FBF8F;
+  --color-state-warning: #E0A32E;
+  --color-state-critical: #FF6B7A;
+  --color-state-uncertain: #7E8B86;
+  --color-series-raw: #C3CEC9;
+  --color-series-mitigated: #26BCC6;
+  --color-series-logical: #A06BE0;
+  --color-state-healthy-bg: #0F2620;
+  --color-state-warning-bg: #2A2009;
+  --color-state-critical-bg: #2E1418;
+  --color-state-uncertain-bg: #1A1F1D;
+  --color-rail-trace: #26BCC6;
+  --color-rail-trace-raw: #C3CEC9;
+  --color-rail-graticule: #182220;
+  --color-rail-plate: #080C0B;
+
+  --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --space-$comment: 4px base, dense-dashboard scale. Named by step so density can be retuned in one place.;
+  --space-0: 0;
+  --space-0_5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-1_5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+  --radius-$comment: Container radius is NEVER semantic — shape is a status channel and must not be diluted. Low radii throughout: the instrument reads machined, not soft.;
+  --radius-none: 0;
+  --radius-control: 0.125rem;
+  --radius-card: 0.25rem;
+  --radius-modal: 0.375rem;
+  --radius-chip: 0.1875rem;
+  --dur-instant: 0ms;
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-rail-stage: 480ms;
+  --dur-rail-series_morph: 640ms;
+
+  --focus-ring: 0 0 0 2px var(--focus-inner), 0 0 0 4px var(--focus-outer);
+}
+
+/* Light at parity — both themes are authored, neither derived. */
+:root[data-theme="light"] {
+  --color-bg-sunken: #E7ECE9;
+  --color-bg-base: #F4F7F5;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-raised: #FFFFFF;
+  --color-bg-overlay: #F4F7F5E6;
+  --color-border-hairline: #DBE2DE;
+  --color-border-control: #808E89;
+  --color-border-strong: #5F6C67;
+  --color-text-primary: #101614;
+  --color-text-secondary: #46524E;
+  --color-text-muted: #5F6C67;
+  --color-text-inverse: #F4F7F5;
+  --color-action-bg: #101614;
+  --color-action-fg: #F4F7F5;
+  --color-action-hover: #29332F;
+  --color-action-active: #000000;
+  --color-action-disabled-bg: #E7ECE9;
+  --color-action-disabled-fg: #98A5A0;
+  --color-focus-inner: #FFFFFF;
+  --color-focus-outer: #101614;
+  --color-row-hover: #EDF2EF;
+  --color-row-selected: #E2EAE6;
+  --color-row-selected-bar: #101614;
+  --color-state-healthy: #0E7A57;
+  --color-state-warning: #8A5A05;
+  --color-state-critical: #B3243C;
+  --color-state-uncertain: #5C6A65;
+  --color-series-raw: #2B3733;
+  --color-series-mitigated: #087B82;
+  --color-series-logical: #6832B8;
+  --color-state-healthy-bg: #E1F1EA;
+  --color-state-warning-bg: #F6ECD9;
+  --color-state-critical-bg: #FAE4E8;
+  --color-state-uncertain-bg: #EAEEEC;
+  --color-rail-trace: #087B82;
+  --color-rail-trace-raw: #2B3733;
+  --color-rail-graticule: #E2E8E5;
+  --color-rail-plate: #FFFFFF;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+  --color-bg-sunken: #E7ECE9;
+  --color-bg-base: #F4F7F5;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-raised: #FFFFFF;
+  --color-bg-overlay: #F4F7F5E6;
+  --color-border-hairline: #DBE2DE;
+  --color-border-control: #808E89;
+  --color-border-strong: #5F6C67;
+  --color-text-primary: #101614;
+  --color-text-secondary: #46524E;
+  --color-text-muted: #5F6C67;
+  --color-text-inverse: #F4F7F5;
+  --color-action-bg: #101614;
+  --color-action-fg: #F4F7F5;
+  --color-action-hover: #29332F;
+  --color-action-active: #000000;
+  --color-action-disabled-bg: #E7ECE9;
+  --color-action-disabled-fg: #98A5A0;
+  --color-focus-inner: #FFFFFF;
+  --color-focus-outer: #101614;
+  --color-row-hover: #EDF2EF;
+  --color-row-selected: #E2EAE6;
+  --color-row-selected-bar: #101614;
+  --color-state-healthy: #0E7A57;
+  --color-state-warning: #8A5A05;
+  --color-state-critical: #B3243C;
+  --color-state-uncertain: #5C6A65;
+  --color-series-raw: #2B3733;
+  --color-series-mitigated: #087B82;
+  --color-series-logical: #6832B8;
+  --color-state-healthy-bg: #E1F1EA;
+  --color-state-warning-bg: #F6ECD9;
+  --color-state-critical-bg: #FAE4E8;
+  --color-state-uncertain-bg: #EAEEEC;
+  --color-rail-trace: #087B82;
+  --color-rail-trace-raw: #2B3733;
+  --color-rail-graticule: #E2E8E5;
+  --color-rail-plate: #FFFFFF;
+  }
+}
