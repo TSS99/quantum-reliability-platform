@@ -13,29 +13,31 @@ the agent begins real work; before that it onboards and stands by (token-frugal)
 
 ## Model allocation summary
 
-**Cross-provider by design (MISSION §5–§6), all on the user's own subscriptions — no metered API.**
-Claude agents run on the claude.ai first-party login; codex agents run on the ChatGPT login
-(`~/.codex/auth.json`, no `OPENAI_API_KEY`). Claude model strings MUST be canonical IDs (ADR-0006):
-`claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5-20251001` — friendly names like "Opus 5" do NOT
-resolve. Codex agents use the environment's GPT-5.6 model names.
+**All agents run on the user's Claude subscription (claude.ai first-party, no metered API).** Codex was
+attempted for 6 roles per MISSION §5–§6 but is **confirmed non-functional as a hive worker here**
+(ADR-0010): codex workers spawn and self-archive within seconds with no session and no output, even solo
+on an empty floor, while Claude workers run normally. Claude model strings MUST be canonical IDs
+(ADR-0006): `claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5-20251001` — friendly names do NOT
+resolve. Reasoning-critical roles → Opus 5; implementation → Sonnet 5.
 
-| Agent | Worker id | Provider | Model | Fallback | Activates |
-|---|---|---|---|---|---|
-| Michael (GOD) | `god` | claude | Opus 4.8 [1M] (running) | — | Phase 0 (now) |
-| Architect | `worker-architect` | codex | **GPT-5.6 sol** | claude-opus-5 | Phase 1 |
-| QEM Scientist | `worker-qem-sci` | codex | **GPT-5.6 sol** | claude-opus-5 | Phase 1 |
-| QEC Scientist | `worker-qec-sci` | claude | **claude-opus-5** | GPT-5.6 sol | Phase 1 |
-| UX Director | `worker-ux-director` | claude | **claude-opus-5** | claude-sonnet-5 | Phase 1 |
-| Optimizer | `worker-optimizer` | codex | **GPT-5.6 terra** | GPT-5.6 sol | Phase 1 |
-| Security | `worker-security` | claude | **claude-opus-5** | GPT-5.6 sol | Phase 1 (light) / 9 (deep) |
-| Backend | `worker-backend` | codex | **GPT-5.6 sol** | claude-opus-5 | Phase 3 |
-| Frontend | `worker-frontend` | claude | **claude-sonnet-5** | Opus 5 (review via god) | Phase 4 |
-| QA | `worker-qa` | codex | **GPT-5.6 sol** | claude-sonnet-5 | Phase 2 (a11y) / 9 (main) |
-| Release | `worker-release` | claude | **claude-sonnet-5** | — | Post-layout-freeze / Phase 10 |
-| Visuals | `worker-visuals` | codex | **GPT-5.6 sol** (reasoning) | — (NEVER Claude raster image gen) | Phase 2+ |
+| Agent | Worker id | Provider | Model | Activates |
+|---|---|---|---|---|
+| Michael (GOD) | `god` | claude | Opus 4.8 [1M] (running) | Phase 0 (now) |
+| Architect | `worker-architect` | claude | **claude-opus-5** | Phase 1 |
+| QEM Scientist | `worker-qem-sci` | claude | **claude-opus-5** | Phase 1 |
+| QEC Scientist | `worker-qec-sci` | claude | **claude-opus-5** | Phase 1 |
+| UX Director | `worker-ux-director` | claude | **claude-opus-5** | Phase 1 |
+| Security | `worker-security` | claude | **claude-opus-5** | Phase 1 (light) / 9 (deep) |
+| Optimizer | `worker-optimizer` | claude | **claude-sonnet-5** | Phase 1 |
+| Backend | `worker-backend` | claude | **claude-sonnet-5** | Phase 3 |
+| Frontend | `worker-frontend` | claude | **claude-sonnet-5** | Phase 4 |
+| QA | `worker-qa` | claude | **claude-sonnet-5** | Phase 2 (a11y) / 9 (main) |
+| Release | `worker-release` | claude | **claude-sonnet-5** | Post-layout-freeze / Phase 10 |
+| Visuals | `worker-visuals` | claude | **claude-sonnet-5** (NEVER Claude raster image gen — briefs+SVG only) | Phase 2+ |
 
-Small repetitive mechanical fixes (renaming, fixtures, formatting) → `claude-haiku-4-5-20251001` or a
-GPT-5.5 codex throwaway worker, spawned ad hoc by god; never Opus 5.
+Small repetitive mechanical fixes → `claude-haiku-4-5-20251001` throwaway workers, spawned ad hoc by
+god; never Opus 5. **Concurrency:** the floor runs only a few worker sessions at once — spawn in small
+batches (2–3), let them finish and archive, then the next batch; do not mass-spawn all 11.
 
 ## Activation timeline (token frugality — not all 11 run at once)
 - **Phase 1 (now, on autonomy-enable):** Architect, QEM Sci, QEC Sci, UX Director, Optimizer, Security — independent spec review.
