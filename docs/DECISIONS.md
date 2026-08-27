@@ -118,3 +118,27 @@ floor cleared.
 ambiguous yes). Supersedes ADR-0008; re-affirms the substance of ADR-0007.
 **Also:** the floor caps concurrent worker sessions low (~3) — spawn in small batches, not all at once.
 **Status:** Accepted.
+
+## ADR-0011 — 2026-08-27 — `Quantity` envelope wraps modelled numbers, not structural integers
+**Decision:** RECON-3's `{value, unit, provenance, method_ref}` envelope applies to every **physical or
+estimated** number crossing the API (error rates, times, money, expectation values, overheads). It does
+**not** apply to **exact structural integers** read off the input with no modelling step: `qubit_count`,
+`depth`, gate counts, `distance`, `rounds`, `shots`, `seed`, list lengths. Those stay plain `int`.
+Rule of thumb: *if the number could have been different under a different model, it is a `Quantity`.*
+**Rationale:** A literal reading of "every numeric quantity" would attach four fields to every integer —
+`"depth": {"value": 12, "unit": "count", "provenance": "measured", "method_ref": "..."}` — tripling
+payload size, and, worse, implying a provenance *decision* was made where none exists. Provenance is the
+honesty mechanism (RECON-4 generates `DEMO_VS_REAL.md` from it); diluting it across trivially exact
+integers weakens the signal it carries.
+**Consequence:** the shared validator (invariants I-1..I-3) checks units only on `Quantity` fields;
+structural integers get plain range validation (`>= 0`).
+**Status:** Proposed — refines RECON-3 without contradicting it; god to confirm at integration.
+
+## ADR-0012 — 2026-08-27 — `POST /api/v1/experiments` added to the §50 endpoint list
+**Decision:** Add `POST /api/v1/experiments` (execute an `ExecutionPlan` → `ExperimentRun`, returning the
+`receipt_id`). `execution_mode: "hardware"` returns `501` in V1.
+**Rationale:** §50 lists `GET /experiments`, `GET /experiments/{id}` and `GET /receipts/{id}` but no way
+to *create* a run, while Flow A step 8 requires one before a receipt can exist. The endpoint has a real
+consumer (§50's own rule), and the alternative — a receipt endpoint that manufactures runs as a side
+effect — would break §32 lineage and hide `execution_mode`.
+**Status:** Proposed — god to confirm at integration.
