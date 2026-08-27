@@ -39,15 +39,26 @@ def test_zero_noise_limit_has_zero_logical_errors(code, noise_model):
 
 
 def test_decomposition_guard_surface_code():
-    # §8.7: dropping decompose_errors=True must fail loudly, not silently mis-decode Y errors.
+    """§8.7: `decompose_errors=True` is a SILENT correctness dependency, so it is asserted.
+
+    Measured against pymatching 2.4.0: `Matching.from_detector_error_model` does NOT reject an
+    undecomposed surface-code DEM. It builds a matcher from the hyperedges without complaint, which
+    is exactly the failure QEC_METHODS.md §4.2 warns about - Y errors mishandled and the reported
+    logical error rate wrong, with no exception anywhere. The only defence is this test.
+    """
     config = SimulationConfig(
         code="rotated_surface", distance=3, noise_model="circuit_level", p=0.01
     )
     circuit = build_circuit(config)
-    assert "^" in str(build_dem(circuit))  # decomposed DEM records separated error components
-    undecomposed = circuit.detector_error_model(decompose_errors=False)
-    with pytest.raises(Exception):
-        pymatching.Matching.from_detector_error_model(undecomposed)
+    decomposed = str(build_dem(circuit))
+    undecomposed = str(circuit.detector_error_model(decompose_errors=False))
+    # "^" is the DEM separator between the components of a decomposed (e.g. Y) error.
+    assert "^" in decomposed
+    assert "^" not in undecomposed
+    assert decomposed != undecomposed
+    pymatching.Matching.from_detector_error_model(
+        circuit.detector_error_model(decompose_errors=False)
+    )  # documents that this does NOT raise; the flag is our responsibility, not pymatching's
 
 
 def test_same_seed_reproduces_the_same_counts():
@@ -104,5 +115,11 @@ def test_surface_code_qubit_counts_match_the_generated_circuit():
         code="rotated_surface", distance=3, noise_model="circuit_level", p=0.001
     )
     circuit = build_circuit(config)
-    assert circuit.num_qubits == 17
+    # §2.3 counts qubits actually used (2d^2-1 = 17). `num_qubits` is the index span, which the
+    # rotated-surface generator leaves sparse (26 for d=3) - a real trap for a resource estimate.
+    assert len(circuit.get_final_qubit_coordinates()) == 17
     assert isinstance(circuit, stim.Circuit)
+    repetition = build_circuit(
+        SimulationConfig(code="repetition", distance=3, noise_model="circuit_level", p=0.001)
+    )
+    assert len(repetition.get_final_qubit_coordinates()) == 5
