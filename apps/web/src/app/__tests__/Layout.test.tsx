@@ -40,7 +40,8 @@ describe('Layout nav', () => {
     );
     const nav = screen.getByRole('navigation', { name: /primary/i });
     const plannedCount = ROUTES.filter((r) => !r.implemented).length;
-    expect(within(nav).getAllByText('planned')).toHaveLength(plannedCount);
+    // queryAllByText returns [] (not a throw) when every route is implemented and none are planned.
+    expect(within(nav).queryAllByText('planned')).toHaveLength(plannedCount);
   });
 
   it('theme toggle flips document [data-theme] and its own accessible name', () => {

@@ -18,13 +18,13 @@ export interface NavRoute {
 export const ROUTES: NavRoute[] = [
   { path: '/overview',     label: 'Overview',     group: 'Plan',        Icon: LayoutDashboard,   implemented: true },
   { path: '/new-analysis', label: 'New Analysis', group: 'Plan',        Icon: FlaskConical,      implemented: true },
-  { path: '/workloads',    label: 'Workloads',    group: 'Plan',        Icon: Boxes,             implemented: false },
-  { path: '/hardware',     label: 'Hardware',     group: 'Hardware',    Icon: Cpu,               implemented: false },
-  { path: '/strategies',   label: 'Strategies',   group: 'Reliability', Icon: SlidersHorizontal, implemented: false },
+  { path: '/workloads',    label: 'Workloads',    group: 'Plan',        Icon: Boxes,             implemented: true },
+  { path: '/hardware',     label: 'Hardware',     group: 'Hardware',    Icon: Cpu,               implemented: true },
+  { path: '/strategies',   label: 'Strategies',   group: 'Reliability', Icon: SlidersHorizontal, implemented: true },
   { path: '/qec-lab',      label: 'QEC Lab',      group: 'Reliability', Icon: Grid3x3,           implemented: true },
-  { path: '/experiments',  label: 'Experiments',  group: 'Evidence',    Icon: ScrollText,        implemented: false },
-  { path: '/integrations', label: 'Integrations', group: 'System',      Icon: PlugZap,           implemented: false },
-  { path: '/settings',     label: 'Settings',     group: 'System',      Icon: Settings,          implemented: false },
+  { path: '/experiments',  label: 'Experiments',  group: 'Evidence',    Icon: ScrollText,        implemented: true },
+  { path: '/integrations', label: 'Integrations', group: 'System',      Icon: PlugZap,           implemented: true },
+  { path: '/settings',     label: 'Settings',     group: 'System',      Icon: Settings,          implemented: true },
 ];
 
 export const NAV_GROUPS = ['Plan', 'Hardware', 'Reliability', 'Evidence', 'System'] as const;
