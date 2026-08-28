@@ -9,11 +9,12 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from app.circuits.qasm import CircuitParseError, parse_qasm
 from app.optimization import Candidate, optimize
+from app.providers import ibm_jobs
 from app.providers.demo import PLANNED_ADAPTERS, provider
 from app.providers.ibm import IBMUnavailable
 from app.providers.ibm import provider as ibm
@@ -234,3 +235,76 @@ def ibm_calibration(backend_id: str) -> dict:
         return ibm.get_calibration(backend_id)
     except IBMUnavailable as exc:
         raise HTTPException(status_code=503, detail={"code": exc.code, "message": str(exc)}) from exc
+
+
+# ----------------------------------------- real hardware (Tier 3: execution, off by default)
+#
+# Everything below can spend someone's quota, so the guards are in `providers.ibm_jobs` and they
+# fail closed. Two rules shape the signatures here:
+#
+#   * the caller's IBM token arrives in a HEADER, never a path, query string or body field — query
+#     strings end up in access logs, browser history and referrers;
+#   * no response ever echoes the token back, and nothing persists it.
+
+
+class SubmitJobRequest(BaseModel):
+    qasm: str = Field(..., description="Complete OpenQASM 2 source to run.")
+    backend_id: str = Field(..., description="IBM backend name, e.g. ibm_brisbane.")
+    shots: int = Field(1024, ge=1, description="Capped server-side by QRP_MAX_SHOTS.")
+
+
+@router.get("/execution/status", tags=["execution"])
+def execution_status() -> dict:
+    """What this deployment will and will not do. Safe to expose; contains no secret."""
+    return ibm_jobs.status()
+
+
+@router.post("/execution/jobs", tags=["execution"], status_code=202)
+def submit_job(
+    req: SubmitJobRequest,
+    x_qrp_ibm_token: str | None = Header(default=None, alias="X-QRP-IBM-Token"),
+) -> dict:
+    """Submit a circuit to real hardware. 202 with a job id; poll for the result.
+
+    503 when submission is disabled or credentials are unusable, 402 when the account's plan could
+    cost money — never a fabricated result.
+    """
+    try:
+        return ibm_jobs.submit(
+            qasm=req.qasm, backend_id=req.backend_id, shots=req.shots, token=x_qrp_ibm_token
+        ).to_json()
+    except ibm_jobs.SubmissionRefused as exc:
+        # A paid or unknown plan is a payment-policy refusal, not a client mistake.
+        code = 402 if exc.code in {"PAID_PLAN_REFUSED", "PLAN_UNKNOWN"} else 503
+        if exc.code in {"SHOTS_OUT_OF_RANGE", "INVALID_CIRCUIT"}:
+            code = 400
+        raise HTTPException(status_code=code, detail={"code": exc.code, "message": str(exc)}) from exc
+    except IBMUnavailable as exc:
+        raise HTTPException(status_code=503, detail={"code": exc.code, "message": str(exc)}) from exc
+
+
+@router.get("/execution/jobs/{job_id}", tags=["execution"])
+def get_job(
+    job_id: str,
+    x_qrp_ibm_token: str | None = Header(default=None, alias="X-QRP-IBM-Token"),
+) -> dict:
+    """Poll one job. Job state is in-memory and does not survive a restart — see `durability`."""
+    job = ibm_jobs.STORE.get(job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "JOB_NOT_FOUND",
+                "message": "No such job. Job state is held in memory and is lost on restart.",
+            },
+        )
+    try:
+        return ibm_jobs.refresh(job, token=x_qrp_ibm_token).to_json()
+    except IBMUnavailable as exc:
+        raise HTTPException(status_code=503, detail={"code": exc.code, "message": str(exc)}) from exc
+
+
+@router.get("/execution/jobs", tags=["execution"])
+def list_jobs() -> dict:
+    """Jobs this process knows about. Never includes a credential."""
+    return {"jobs": [j.to_json() for j in ibm_jobs.STORE.list()], "durability": "in_memory"}

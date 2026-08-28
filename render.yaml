@@ -1,0 +1,27 @@
+# Render blueprint for the QRP backend.
+#
+# The public prototype on GitHub Pages is static and computes everything in the browser. This
+# service is the other half: real IBM calibration reads (free) and, when explicitly enabled, real
+# hardware submission.
+#
+# Deliberately NOT set here:
+#   * QRP_IBM_TOKEN — credentials are per-user and arrive on the request. Setting a server token
+#     would mean every visitor spends one account's quota.
+#   * QRP_ENABLE_HARDWARE_SUBMIT — submission stays off until a human turns it on in the Render
+#     dashboard, having first confirmed the account is on a free plan.
+services:
+  - type: web
+    name: qrp-api
+    runtime: python
+    plan: free
+    rootDir: services/api
+    buildCommand: pip install --upgrade pip && pip install '.[quantum]'
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: QRP_ALLOWED_ORIGINS
+        value: https://tss99.github.io
+      - key: QRP_MAX_SHOTS
+        value: "4096"

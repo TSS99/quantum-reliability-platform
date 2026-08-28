@@ -142,3 +142,32 @@ to *create* a run, while Flow A step 8 requires one before a receipt can exist. 
 consumer (§50's own rule), and the alternative — a receipt endpoint that manufactures runs as a side
 effect — would break §32 lineage and hide `execution_mode`.
 **Status:** Accepted (god confirmed at integration 2026-08-27).
+
+## ADR-0013 — 2026-08-28 — Tier 3 execution: Render, per-user tokens, $0 ceiling, flag-gated
+**Decision:** Real hardware execution ships behind four decisions, all confirmed by the human:
+1. **Hosting: Render** (`render.yaml`, free plan, `rootDir: services/api`). GitHub Pages is static and
+   cannot host FastAPI; Render's free tier suits a service whose calls already take minutes.
+2. **Credentials: per-user, browser-held.** The caller's IBM token arrives on the request in the
+   `X-QRP-IBM-Token` header, is used for that call, and is dropped. The browser keeps it in a module
+   variable — never `localStorage`, `sessionStorage`, a cookie or a URL. `QRP_IBM_TOKEN` survives only
+   as a local-development convenience and is deliberately unset in `render.yaml`.
+3. **Spend ceiling: $0.** Only plans positively identified as free/open may run. `assert_free_plan`
+   fails **closed**: an undeterminable plan is refused (`PLAN_UNKNOWN`, HTTP 402), because guessing
+   wrong spends someone's money. A separate `QRP_MAX_SHOTS` cap (default 4096) blocks the extra-zero
+   mistake.
+4. **Submission off by default.** `QRP_ENABLE_HARDWARE_SUBMIT` must be explicitly set; otherwise the
+   endpoint returns 503 `SUBMISSION_DISABLED`. A deployment that never considered billing cannot spend.
+
+**Rationale:** this is the only code path in the product that can cost real money, and it is reachable
+from a public URL. Every guard therefore denies by default and each refusal carries a machine-readable
+reason instead of a generic failure.
+
+**Consequences:**
+* Job state is in-memory (`durability: "in_memory"`), stated in every job response and in the 404 for a
+  missing job. Render free instances sleep and restart, so a job id does not survive a redeploy. A
+  durable store is Tier 4, alongside authentication.
+* CORS moves from absent to an explicit allowlist (`QRP_ALLOWED_ORIGINS`). Never `*`: this API accepts a
+  credential in a header, and a wildcard would let any page ask a visitor's browser to send it here.
+  `allow_credentials=False` — the token is an explicit header, never an ambient cookie.
+* Settings stops being decorative and becomes the connection surface (endpoint, token, live policy).
+**Status:** Accepted (human decision recorded via AskUserQuestion, 2026-08-28).

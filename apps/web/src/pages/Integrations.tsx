@@ -1,4 +1,5 @@
 import { Card } from '../components/ui';
+import { HardwareExecution } from '../components/HardwareExecution';
 
 type Status = 'demo_support' | 'adapter_planned' | 'integration_implemented';
 
@@ -12,7 +13,7 @@ const STATUS: Record<Status, { label: string; cls: string }> = {
 // claims — provider names denote planned compatibility only (MISSION §15 platform-neutral layer).
 const ROWS: { provider: string; kind: string; status: Status; note: string }[] = [
   { provider: 'Demo provider', kind: 'Superconducting + ion-trap', status: 'demo_support', note: 'Seeded profiles + calibration powering this prototype.' },
-  { provider: 'IBM-like', kind: 'Superconducting', status: 'adapter_planned', note: 'Adapter interface defined; real tokens live server-side only.' },
+  { provider: 'IBM Quantum', kind: 'Superconducting', status: 'integration_implemented', note: 'Live read-only calibration (free, no job submitted). Execution is available when a backend enables it; tokens are per-user and held in your browser only.' },
   { provider: 'IQM-like', kind: 'Superconducting', status: 'adapter_planned', note: 'Planned.' },
   { provider: 'Rigetti-like', kind: 'Superconducting', status: 'adapter_planned', note: 'Planned.' },
   { provider: 'IonQ-like', kind: 'Ion trap', status: 'adapter_planned', note: 'Planned.' },
@@ -51,6 +52,7 @@ export function Integrations() {
           </table>
         </div>
       </Card>
+      <HardwareExecution />
     </div>
   );
 }
