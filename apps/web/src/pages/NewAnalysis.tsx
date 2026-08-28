@@ -45,7 +45,7 @@ export function NewAnalysis() {
     <div className="flex flex-col gap-5">
       <header>
         <p className="text-eyebrow uppercase text-series-mitigated">New analysis</p>
-        <h2 className="text-display-m">Choose a reliability strategy for {workload.display_name}</h2>
+        <h2 className="font-display text-display-m font-normal">Choose a reliability strategy for {workload.display_name}</h2>
         <p className="mt-1 text-body-s text-text-muted">
           Circuit → hardware → strategies → cost/error → recommendation, computed client-side from
           seeded demo data. Illustrative, not a hardware measurement.

@@ -47,7 +47,7 @@ export function QecLab() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-eyebrow uppercase text-series-logical">QEC Lab</p>
-          <h2 className="text-display-m">Logical error vs physical error</h2>
+          <h2 className="font-display text-display-m font-normal">Logical error vs physical error</h2>
           <p className="mt-1 max-w-2xl text-body-s text-text-muted">
             Curves are read from the committed grid produced by a real Stim + PyMatching (MWPM)
             simulation. Where the distance curves cross is the threshold region — below it, adding

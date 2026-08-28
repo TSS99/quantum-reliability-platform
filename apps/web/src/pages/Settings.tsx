@@ -8,7 +8,7 @@ export function Settings() {
     <div className="flex flex-col gap-5">
       <header>
         <p className="text-eyebrow uppercase text-series-mitigated">Settings</p>
-        <h2 className="text-display-m">Preferences</h2>
+        <h2 className="font-display text-display-m font-normal">Preferences</h2>
       </header>
 
       <Card className="divide-y divide-border-hairline p-0">

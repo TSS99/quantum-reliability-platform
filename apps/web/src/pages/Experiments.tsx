@@ -79,7 +79,7 @@ export function Experiments() {
     <div className="flex flex-col gap-5">
       <header>
         <p className="text-eyebrow uppercase text-series-mitigated">Experiments</p>
-        <h2 className="text-display-m">Runs &amp; reliability receipts</h2>
+        <h2 className="font-display text-display-m font-normal">Runs &amp; reliability receipts</h2>
         <p className="mt-1 text-body-s text-text-muted">Each run keeps the evidence that lets you check whether the strategy actually helped. Demo runs — actual measurements are null by design.</p>
       </header>
 

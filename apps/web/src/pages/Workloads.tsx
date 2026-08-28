@@ -12,7 +12,7 @@ export function Workloads() {
     <div className="flex flex-col gap-5">
       <header>
         <p className="text-eyebrow uppercase text-series-mitigated">Workloads</p>
-        <h2 className="text-display-m">Example quantum workloads</h2>
+        <h2 className="font-display text-display-m font-normal">Example quantum workloads</h2>
         <p className="mt-1 text-body-s text-text-muted">Each ships with the observable it is measured against — an example circuit without one is meaningless.</p>
       </header>
       <div className="grid gap-4 md:grid-cols-2">

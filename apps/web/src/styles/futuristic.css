@@ -1,10 +1,8 @@
 /* ============================================================================
-   QUANTUM OBSERVATORY — the visual world.
-   A deep-field instrument console. Every effect is earned by the domain:
-   the lattice is a qubit coupling grid, the sweep is an oscilloscope trace,
-   the glow is bound to signal. No generic startup gradients.
-   Layered on top of tokens.css; all colours resolve to theme tokens, so the
-   light theme re-tints rather than breaking.
+   DEEP FIELD — the chosen visual world (design canvas, direction B).
+   A deep-space instrument: layered volumetric aurora, starfield, film grain,
+   orbital motifs, and frosted glass. Serif display over grotesk body.
+   All colours resolve to theme tokens so light theme re-tints, never breaks.
    ========================================================================= */
 
 :root {
@@ -12,12 +10,17 @@
   --glow-violet: 160 107 224; /* series.logical */
   --ease-out-quant: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quant: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Deep Field type + shape: an editorial serif for display, softer geometry. */
+  --font-display: 'Instrument Serif', 'Space Grotesk', Georgia, serif;
+  --radius-card: 18px;
+  --radius-control: 10px;
+  --radius-chip: 999px;
+  --radius-modal: 22px;
 }
 
 /* ---------------------------------------------------------------- ambience */
 
-/* The deep field: two slow aurora blooms + a qubit lattice, fixed behind
-   everything. Pointer-events none so it never eats a click. */
 .qo-field {
   position: fixed;
   inset: 0;
@@ -26,91 +29,116 @@
   overflow: hidden;
 }
 
+/* Two aurora layers drifting independently — depth comes from their parallax. */
 .qo-field::before {
-  /* aurora */
   content: '';
   position: absolute;
-  inset: -30%;
+  inset: -28%;
   background:
-    radial-gradient(42% 38% at 18% 12%, rgb(var(--glow-cyan) / 0.16), transparent 70%),
-    radial-gradient(38% 42% at 84% 78%, rgb(var(--glow-violet) / 0.13), transparent 72%),
-    radial-gradient(30% 30% at 62% 22%, rgb(var(--glow-cyan) / 0.07), transparent 70%);
-  filter: blur(28px);
-  animation: qo-drift 34s var(--ease-in-out-quant) infinite alternate;
+    radial-gradient(36% 40% at 20% 24%, rgb(var(--glow-cyan) / 0.30), transparent 66%),
+    radial-gradient(32% 38% at 80% 68%, rgb(var(--glow-violet) / 0.26), transparent 68%);
+  filter: blur(70px);
+  animation: qo-drift-a 26s var(--ease-in-out-quant) infinite alternate;
 }
 
 .qo-field::after {
-  /* coupling lattice */
   content: '';
   position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(24% 28% at 62% 16%, rgb(63 191 143 / 0.14), transparent 70%),
+    radial-gradient(30% 26% at 38% 82%, rgb(var(--glow-cyan) / 0.12), transparent 72%);
+  filter: blur(60px);
+  animation: qo-drift-b 34s var(--ease-in-out-quant) infinite alternate;
+}
+
+@keyframes qo-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(4%, -3%, 0) scale(1.14); }
+}
+@keyframes qo-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.05); }
+  to { transform: translate3d(-4%, 3%, 0) scale(1); }
+}
+
+/* Starfield — sparse, slowly breathing. */
+.qo-stars {
+  position: fixed;
   inset: 0;
-  background-image:
-    linear-gradient(to right, var(--color-rail-graticule) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--color-rail-graticule) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 78%);
-  opacity: 0.5;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgb(255 255 255 / 0.5) 1px, transparent 1px);
+  background-size: 120px 90px;
+  opacity: 0.16;
+  animation: qo-twinkle 7s var(--ease-in-out-quant) infinite;
 }
+@keyframes qo-twinkle {
+  0%, 100% { opacity: 0.10; }
+  50% { opacity: 0.22; }
+}
+:root[data-theme='light'] .qo-stars { display: none; }
 
-:root[data-theme='light'] .qo-field::before {
-  opacity: 0.55;
+/* Counter-rotating orbital rings — the landing's signature motif. */
+.qo-orbit {
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: qo-orbit 70s linear infinite;
 }
-
-@keyframes qo-drift {
-  from { transform: translate3d(-2%, -1%, 0) scale(1); }
-  to { transform: translate3d(3%, 2%, 0) scale(1.08); }
+.qo-orbit-slow { animation-duration: 110s; animation-direction: reverse; border-color: rgb(var(--glow-violet) / 0.12); }
+.qo-orbit-body {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgb(var(--glow-cyan));
+  box-shadow: 0 0 34px 7px rgb(var(--glow-cyan) / 0.75);
 }
+.qo-orbit-slow .qo-orbit-body {
+  top: auto;
+  bottom: 10px;
+  left: 18%;
+  width: 7px;
+  height: 7px;
+  background: rgb(var(--glow-violet));
+  box-shadow: 0 0 22px 5px rgb(var(--glow-violet) / 0.7);
+}
+@keyframes qo-orbit { to { transform: rotate(360deg); } }
+:root[data-theme='light'] .qo-orbit { border-color: rgb(16 22 20 / 0.07); }
 
 /* ------------------------------------------------------------------- glass */
 
-/* Instrument panel: translucent plate, hairline edge, and a top light-catch
-   line — the highlight a real bezel would have. */
 .qo-glass {
   position: relative;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.012));
-  backdrop-filter: blur(14px) saturate(1.25);
-  -webkit-backdrop-filter: blur(14px) saturate(1.25);
-  border: 1px solid var(--color-border-hairline);
-  box-shadow:
-    0 1px 0 0 rgb(255 255 255 / 0.06) inset,
-    0 18px 44px -28px rgb(0 0 0 / 0.85);
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.075), rgb(255 255 255 / 0.015));
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid rgb(255 255 255 / 0.11);
+  box-shadow: 0 40px 90px -55px rgb(0 0 0 / 0.95);
 }
 
 :root[data-theme='light'] .qo-glass {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.72));
-  box-shadow:
-    0 1px 0 0 rgb(255 255 255 / 0.9) inset,
-    0 14px 34px -26px rgb(16 22 20 / 0.35);
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.94), rgb(255 255 255 / 0.74));
+  border-color: var(--color-border-hairline);
+  box-shadow: 0 18px 44px -32px rgb(16 22 20 / 0.35);
 }
 
-/* Edge-lit panel: a scanning highlight along the top edge, like a powered rail. */
 .qo-lit::before {
   content: '';
   position: absolute;
   inset-inline: 0;
   top: -1px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(var(--glow-cyan) / 0.75),
-    rgb(var(--glow-violet) / 0.5),
-    transparent
-  );
-  opacity: 0.9;
+  background: linear-gradient(90deg, transparent, rgb(var(--glow-cyan) / 0.7), rgb(var(--glow-violet) / 0.45), transparent);
 }
 
 /* ------------------------------------------------------------------- glow */
 
-.qo-glow-cyan {
-  box-shadow: 0 0 0 1px rgb(var(--glow-cyan) / 0.35), 0 0 28px -6px rgb(var(--glow-cyan) / 0.4);
-}
-.qo-text-glow {
-  text-shadow: 0 0 22px rgb(var(--glow-cyan) / 0.35);
-}
+.qo-text-glow { text-shadow: 0 0 26px rgb(var(--glow-cyan) / 0.3); }
 
-/* A hairline that fades at both ends — used to separate instrument sections. */
 .qo-rule {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--color-border-control), transparent);
@@ -119,7 +147,6 @@
 
 /* ------------------------------------------------------------------ motion */
 
-/* Entrance: content assembles rather than popping. Stagger via --i. */
 .qo-rise {
   animation: qo-rise 0.62s var(--ease-out-quant) both;
   animation-delay: calc(var(--i, 0) * 70ms);
@@ -129,51 +156,47 @@
   to { opacity: 1; transform: none; }
 }
 
-/* Oscilloscope sweep across a panel — one pass on mount, not a loop. */
 .qo-sweep::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 38%, rgb(var(--glow-cyan) / 0.12) 50%, transparent 62%);
+  background: linear-gradient(105deg, transparent 38%, rgb(var(--glow-cyan) / 0.10) 50%, transparent 62%);
   transform: translateX(-120%);
   animation: qo-sweep 1.5s var(--ease-out-quant) 0.25s both;
   pointer-events: none;
 }
-@keyframes qo-sweep {
-  to { transform: translateX(120%); }
-}
+@keyframes qo-sweep { to { transform: translateX(120%); } }
 
-/* Hover lift for interactive panels — transform/opacity only. */
 .qo-hover {
   transition: transform 240ms var(--ease-out-quant), box-shadow 240ms var(--ease-out-quant),
     border-color 240ms var(--ease-out-quant);
 }
 .qo-hover:hover {
   transform: translateY(-2px);
-  border-color: var(--color-border-control);
-  box-shadow: 0 0 0 1px rgb(var(--glow-cyan) / 0.22), 0 22px 48px -30px rgb(0 0 0 / 0.9);
+  border-color: rgb(255 255 255 / 0.2);
+  box-shadow: 0 0 0 1px rgb(var(--glow-cyan) / 0.2), 0 34px 70px -46px rgb(0 0 0 / 0.95);
 }
 
-/* A live signal dot — the only looping motion, and it marks live state. */
-.qo-pulse {
-  position: relative;
-}
+/* A live signal ring — the only looping motion, and it marks live state. */
+.qo-pulse { position: relative; }
 .qo-pulse::after {
   content: '';
   position: absolute;
   inset: -4px;
   border-radius: 9999px;
-  border: 1px solid rgb(var(--glow-cyan) / 0.5);
-  animation: qo-ping 2.4s var(--ease-out-quant) infinite;
+  border: 1px solid rgb(var(--glow-cyan) / 0.6);
+  animation: qo-ping 2.5s var(--ease-out-quant) infinite;
 }
 @keyframes qo-ping {
-  0% { opacity: 0.8; transform: scale(0.8); }
-  70%, 100% { opacity: 0; transform: scale(1.8); }
+  0% { opacity: 0.9; transform: scale(0.85); }
+  70%, 100% { opacity: 0; transform: scale(2.1); }
 }
 
-/* Reduced motion: keep every state legible, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
   .qo-field::before,
+  .qo-field::after,
+  .qo-stars,
+  .qo-orbit,
   .qo-rise,
   .qo-sweep::after,
   .qo-pulse::after {
