@@ -206,6 +206,8 @@ def _parse_fallback(source: str, version: str) -> CircuitProfile:
 
     hist: dict[str, int] = {}
     one = two = multi = meas = 0
+    saw_measure = False
+    mid_circuit = False
     unsupported: set[str] = set()
     for statement in _SPLIT.split(body):
         m = re.match(r"\s*([a-zA-Z][a-zA-Z0-9_]*)", statement)
@@ -220,14 +222,19 @@ def _parse_fallback(source: str, version: str) -> CircuitProfile:
             whole_register = bool(re.search(r"measure\s+\w+\s*->", statement))
             n = qubits if whole_register else 1
             meas += n
+            saw_measure = True
             hist[t] = hist.get(t, 0) + n
         elif t in _ONE_Q:
+            # a quantum op AFTER a measurement is what makes a circuit dynamic
+            mid_circuit = mid_circuit or saw_measure
             one += 1
             hist[t] = hist.get(t, 0) + 1
         elif t in _TWO_Q:
+            mid_circuit = mid_circuit or saw_measure
             two += 1
             hist[t] = hist.get(t, 0) + 1
         elif t in _THREE_Q:
+            mid_circuit = mid_circuit or saw_measure
             multi += 1
             hist[t] = hist.get(t, 0) + 1
         else:
@@ -252,7 +259,7 @@ def _parse_fallback(source: str, version: str) -> CircuitProfile:
         qubit_count=qubits, clbit_count=clbits, depth=approx_depth,
         single_qubit_gate_count=one, two_qubit_gate_count=two, multi_qubit_gate_count=multi,
         measurement_count=meas, gate_histogram=hist,
-        has_mid_circuit_measurement=False,  # not detectable reliably without a real parser
+        has_mid_circuit_measurement=mid_circuit,
         has_classical_feedback=bool(re.search(r"^\s*if\s*\(", body, re.M)),
         parser="fallback", qasm_version=version, warnings=warnings,
     )

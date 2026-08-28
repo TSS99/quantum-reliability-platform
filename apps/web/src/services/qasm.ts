@@ -34,6 +34,10 @@ export interface ParsedCircuit {
   idle_exposure: number;
   gate_histogram: Record<string, number>;
   has_classical_feedback: boolean;
+  /** A measurement followed by a later quantum op — makes ZNE folding invalid. */
+  has_mid_circuit_measurement: boolean;
+  /** True when the browser scanner cannot decide; the UI must say so rather than guess. */
+  dynamic_uncertain: boolean;
   qasm_version: '2' | '3';
   warnings: string[];
 }
@@ -84,6 +88,8 @@ export function parseQasm(source: string): ParsedCircuit {
 
   const hist: Record<string, number> = {};
   let one = 0, two = 0, multi = 0, meas = 0;
+  let sawMeasure = false;
+  let midCircuit = false;
   const unknown = new Set<string>();
 
   for (const line of body.split(/[\n;]/)) {
@@ -97,10 +103,18 @@ export function parseQasm(source: string): ParsedCircuit {
       const n = whole ? qubits : 1;
       meas += n;
       hist[t] = (hist[t] ?? 0) + n;
-    } else if (ONE_Q.has(t)) { one++; hist[t] = (hist[t] ?? 0) + 1; }
-    else if (TWO_Q.has(t)) { two++; hist[t] = (hist[t] ?? 0) + 1; }
-    else if (THREE_Q.has(t)) { multi++; hist[t] = (hist[t] ?? 0) + 1; }
-    else unknown.add(t);
+      sawMeasure = true;
+    } else if (ONE_Q.has(t) || TWO_Q.has(t) || THREE_Q.has(t)) {
+      // a quantum op AFTER a measurement is the definition of mid-circuit measurement
+      if (sawMeasure) midCircuit = true;
+      if (ONE_Q.has(t)) one++;
+      else if (TWO_Q.has(t)) two++;
+      else multi++;
+      hist[t] = (hist[t] ?? 0) + 1;
+    } else if (t === 'reset') {
+      if (sawMeasure) midCircuit = true;
+      hist[t] = (hist[t] ?? 0) + 1;
+    } else unknown.add(t);
   }
 
   const total = one + two + multi;
@@ -116,7 +130,13 @@ export function parseQasm(source: string): ParsedCircuit {
   const busy = one + 2 * two + 3 * multi;
   const idle = Math.max(0, 1 - busy / Math.max(depth * qubits, 1));
 
+  const controlFlow = /(for|while|switch|case|if)\s*[({]/.test(body);
+  const dynamicUncertain = controlFlow || unknown.size > 0;
+
   const warnings = ['Depth is approximated (no scheduler in the browser); install the backend for an exact profile.'];
+  if (dynamicUncertain) {
+    warnings.push('Dynamic-circuit compatibility: uncertain — exact backend analysis required before ZNE eligibility can be confirmed.');
+  }
   if (unknown.size) warnings.push(`Unrecognised statements ignored: ${[...unknown].slice(0, 6).join(', ')}`);
 
   return {
@@ -132,6 +152,8 @@ export function parseQasm(source: string): ParsedCircuit {
     idle_exposure: Number(idle.toFixed(4)),
     gate_histogram: hist,
     has_classical_feedback: /^\s*if\s*\(/m.test(body),
+    has_mid_circuit_measurement: midCircuit,
+    dynamic_uncertain: dynamicUncertain,
     qasm_version: version,
     warnings,
   };
@@ -163,12 +185,26 @@ import { q } from './demoFixtures';
 import { errorBudget } from './demoEngine';
 import type { CalibrationSnapshot } from './contracts';
 
-/** Deterministic fingerprint from the circuit's normalised shape (§31). */
-function fingerprint(p: ParsedCircuit): string {
+/**
+ * Deterministic fingerprint over the CANONICALISED SOURCE, not merely the circuit's shape (§31).
+ *
+ * Shape alone is not an identity: two circuits with identical gate counts, depth and histogram can
+ * differ in ordering, connectivity, parameters and meaning — and would collide. Receipt lineage
+ * depends on this being a real identity, so the normalised instruction text is hashed too.
+ */
+function fingerprint(p: ParsedCircuit, source: string): string {
+  const normalised = source
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/.*$/gm, ' ')
+    .split(/[;\n]/)
+    .map((l) => l.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+    .join(';');
   const canon = [
     p.qubit_count, p.depth, p.single_qubit_gate_count, p.two_qubit_gate_count,
     p.multi_qubit_gate_count, p.measurement_count,
     ...Object.entries(p.gate_histogram).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}:${v}`),
+    normalised,
   ].join('|');
   let h = 0x811c9dc5;
   for (let i = 0; i < canon.length; i++) {
@@ -183,16 +219,16 @@ function fingerprint(p: ParsedCircuit): string {
  * with the SAME error-budget model the built-in examples use — so a user circuit is judged on
  * identical terms, not a separate ad-hoc path.
  */
-export function toCircuitProfile(p: ParsedCircuit, calibration: CalibrationSnapshot): CircuitProfile {
+export function toCircuitProfile(p: ParsedCircuit, calibration: CalibrationSnapshot, source = ''): CircuitProfile {
   const base: CircuitProfile = {
-    circuit_fingerprint: fingerprint(p),
+    circuit_fingerprint: fingerprint(p, source),
     qubit_count: p.qubit_count,
     depth: p.depth,
     two_qubit_gate_count: p.two_qubit_gate_count,
     single_qubit_gate_count: p.single_qubit_gate_count,
     measurement_count: p.measurement_count,
     idle_exposure: q(p.idle_exposure, 'ratio', 'heuristic'),
-    has_mid_circuit_measurement: false,
+    has_mid_circuit_measurement: p.has_mid_circuit_measurement,
     has_classical_feedback: p.has_classical_feedback,
     estimated_raw_error: q(0, 'expectation_value', 'heuristic'),
   };

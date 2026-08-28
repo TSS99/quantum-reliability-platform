@@ -89,7 +89,15 @@ export function QecLab() {
                   <div className="mt-1 metric text-metric-m text-text-primary">{c.physical_qubits}<span className="ml-1 text-body-s text-text-muted">qubits</span></div>
                   {best && (
                     <div className="mt-1 text-caption text-text-muted">
-                      best logical err {best.logical_error_rate === 0 ? '< 1 / shots' : best.logical_error_rate.toExponential(1)}
+                      {best.logical_errors === 0 ? (
+                        <>
+                          0 failures / {best.shots.toLocaleString()} shots
+                          <br />
+                          95% upper bound {(best.lerpr_ci_high ?? best.ler_ci_high).toExponential(1)}
+                        </>
+                      ) : (
+                        <>best logical err/round {best.logical_error_rate_per_round.toExponential(1)}</>
+                      )}
                     </div>
                   )}
                 </Card>
