@@ -193,6 +193,7 @@ def _parse_with_qiskit(source: str, version: str):
 
 _DECL = re.compile(r"\bqreg\s+\w+\s*\[\s*(\d+)\s*\]|\bqubit\s*\[\s*(\d+)\s*\]", re.I)
 _CDECL = re.compile(r"\bcreg\s+\w+\s*\[\s*(\d+)\s*\]|\bbit\s*\[\s*(\d+)\s*\]", re.I)
+_SPLIT = re.compile(r"[;\n]")
 _STMT = re.compile(r"^\s*([a-zA-Z][a-zA-Z0-9_]*)", re.M)
 
 
@@ -206,13 +207,20 @@ def _parse_fallback(source: str, version: str) -> CircuitProfile:
     hist: dict[str, int] = {}
     one = two = multi = meas = 0
     unsupported: set[str] = set()
-    for token in _STMT.findall(body):
-        t = token.lower()
+    for statement in _SPLIT.split(body):
+        m = re.match(r"\s*([a-zA-Z][a-zA-Z0-9_]*)", statement)
+        if not m:
+            continue
+        t = m.group(1).lower()
         if t in ("openqasm", "include", "qreg", "creg", "qubit", "bit", "gate", "barrier", "if", "def"):
             continue
         if t == "measure":
-            meas += 1
-            hist[t] = hist.get(t, 0) + 1
+            # `measure q -> c;` measures the WHOLE register; qiskit expands that per qubit, so the
+            # fallback must too or the two parsers disagree on the same circuit.
+            whole_register = bool(re.search(r"measure\s+\w+\s*->", statement))
+            n = qubits if whole_register else 1
+            meas += n
+            hist[t] = hist.get(t, 0) + n
         elif t in _ONE_Q:
             one += 1
             hist[t] = hist.get(t, 0) + 1
