@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ALLOWED_ORIGINS,
   api,
   clearToken,
   getEndpoint,
@@ -32,7 +33,7 @@ describe('backend session', () => {
   beforeEach(() => {
     localStorage.clear();
     clearToken();
-    setEndpoint('https://api.example.test');
+    setEndpoint(ALLOWED_ORIGINS[0]);
   });
 
   afterEach(() => {
@@ -53,10 +54,10 @@ describe('backend session', () => {
   });
 
   it('persists the endpoint, which is not a secret', () => {
-    setEndpoint('https://qrp.example.test/');
+    setEndpoint(`${ALLOWED_ORIGINS[0]}/`);
     // trailing slash trimmed so paths do not double up
-    expect(getEndpoint()).toBe('https://qrp.example.test');
-    expect(JSON.stringify({ ...localStorage })).toContain('qrp.example.test');
+    expect(getEndpoint()).toBe(ALLOWED_ORIGINS[0]);
+    expect(JSON.stringify({ ...localStorage })).toContain(ALLOWED_ORIGINS[0]);
   });
 
   it('sends the token as a header and never in the URL', async () => {
@@ -101,6 +102,17 @@ describe('backend session', () => {
   it('reports an unreachable backend as such instead of throwing a raw network error', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
     await expect(api('/health')).rejects.toMatchObject({ code: 'UNREACHABLE' });
+  });
+
+  it('refuses an endpoint that is not on the connect-src allowlist', async () => {
+    // The page can hold an IBM token, so the set of hosts it may contact is a fixed list. The CSP
+    // is the real enforcement; this check exists so the user gets a reason instead of a dead request.
+    setEndpoint('https://not-our-backend.example');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(api('/health')).rejects.toMatchObject({ code: 'ENDPOINT_NOT_ALLOWED' });
+    // and crucially it never left the browser
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('refuses to call anything with no endpoint configured', async () => {

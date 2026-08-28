@@ -27,8 +27,10 @@ export function Integrations() {
         <p className="text-eyebrow uppercase text-series-mitigated">Integrations</p>
         <h2 className="font-display text-display-m font-normal">Provider support</h2>
         <p className="mt-1 max-w-2xl text-body-s text-text-muted">
-          A hardware-independent control plane. The prototype runs on the demo provider; real
-          adapters are backend-only by design — no provider credential ever reaches the browser.
+          A hardware-independent control plane. The prototype runs on the demo provider. QRP never
+          persists a provider credential: in connected mode your IBM token is held in this browser
+          tab&rsquo;s memory only, and is forwarded to the QRP backend you configured solely to
+          authorise your own provider calls.
         </p>
       </header>
       <Card className="overflow-hidden p-0">

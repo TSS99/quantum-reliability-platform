@@ -6,9 +6,14 @@ import { ParetoFront } from '../components/charts/ParetoFront';
 import { QecEscalation } from '../components/QecEscalation';
 import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
 import { DEFAULT_GOAL, optimize, paretoFront, preflight } from '../services/demoEngine';
-import type { PriorityPreset, PreflightStatus } from '../services/contracts';
+import type {
+  OptimizeResponse,
+  PreflightStatus,
+  PriorityPreset,
+  ReliabilityGoal,
+} from '../services/contracts';
 import { fmtSci, money } from '../components/charts/scale';
-import { QASM_TEMPLATES, QasmError, parseQasm, toCircuitProfile } from '../services/qasm';
+import { QASM_TEMPLATES, QasmError, parseQasm, toCircuitProfile, validateObservable } from '../services/qasm';
 
 const PRESETS: { id: PriorityPreset; label: string }[] = [
   { id: 'minimize_cost', label: 'Minimize cost' },
@@ -53,17 +58,45 @@ export function NewAnalysis() {
 
   const profile = (custom?.profile ?? CIRCUIT_PROFILES[workloadId])!;
 
+  const obsCheck = useMemo(
+    () =>
+      taskType === 'observable' && profile
+        ? validateObservable(observable, profile.qubit_count)
+        : ({ ok: true } as const),
+    [taskType, observable, profile],
+  );
+
   const { result, pareto, recommended, verdict } = useMemo(() => {
-    const goal = { ...DEFAULT_GOAL, priority, target_error: targetError };
+    const goal: ReliabilityGoal = {
+      ...DEFAULT_GOAL,
+      priority,
+      target_error: targetError,
+      task:
+        taskType === 'observable'
+          ? {
+              type: 'observable',
+              metric: 'absolute_expectation_error',
+              observable: observable.trim().toUpperCase(),
+            }
+          : { type: 'sampling', metric: 'total_variation_distance', observable: null },
+    };
     if (!profile) {
-      return { result: { plans: [], recommended_plan_id: null }, pareto: new Set<string>(), recommended: null, verdict: null };
+      return {
+        result: { plans: [], recommended_plan_id: null } as Pick<
+          OptimizeResponse,
+          'plans' | 'recommended_plan_id'
+        > & { unsupported?: OptimizeResponse['unsupported'] },
+        pareto: new Set<string>(),
+        recommended: null,
+        verdict: null,
+      };
     }
     const result = optimize(profile, BACKENDS, CALIBRATIONS, goal);
     const pareto = paretoFront(result.plans);
     const recommended = result.plans.find((p) => p.plan_id === result.recommended_plan_id) ?? null;
     const verdict = recommended ? preflight(recommended, goal) : null;
     return { result, pareto, recommended, verdict };
-  }, [profile, priority, targetError]);
+  }, [profile, priority, targetError, taskType, observable]);
 
   const st = verdict ? STATUS[verdict.status] : STATUS.DO_NOT_RUN;
   const ranked = [...result.plans].sort((a, b) => (b.score?.value ?? -1) - (a.score?.value ?? -1)).slice(0, 6);
@@ -184,14 +217,22 @@ export function NewAnalysis() {
                         className="mono mt-1 w-full rounded-control border border-border-hairline bg-bg-surface px-2 py-1 text-body-s text-text-primary outline-none focus:border-series-mitigated"
                         placeholder="ZZ"
                       />
-                      <p className="mt-1 text-caption text-text-muted">
-                        Target error is absolute error on ⟨{observable || 'O'}⟩, normalised to [-1, 1].
-                      </p>
+                      {obsCheck.ok ? (
+                        <p className="mt-1 text-caption text-text-muted">
+                          Target error is absolute error on ⟨{observable || 'O'}⟩, normalised to
+                          [-1, 1]. The observable defines the reported metric; the current predictor
+                          is structural and does not yet model observable-specific noise sensitivity.
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-caption text-state-warning">{obsCheck.reason}</p>
+                      )}
                     </div>
                   ) : (
                     <p className="mt-2 text-caption text-state-warning">
-                      Sampling tasks are measured by distribution distance (TVD), not observable error —
-                      expectation-value strategies such as ZNE do not apply. Not yet modelled.
+                      Sampling tasks are measured by distribution distance (TVD), not observable
+                      error — expectation-value strategies such as ZNE do not apply. Not yet
+                      modelled, so the optimizer will decline rather than score this with the wrong
+                      model.
                     </p>
                   )}
                 </div>
@@ -325,6 +366,23 @@ export function NewAnalysis() {
         </div>
 
         <div className="flex flex-col gap-4">
+          {(result.unsupported || !obsCheck.ok) && (
+            <Card className="border-state-warning/40 p-4">
+              <h3 className="text-heading-m text-state-warning">Analysis stopped</h3>
+              <p className="mt-1.5 text-body-s text-text-secondary">
+                {result.unsupported
+                  ? result.unsupported.message
+                  : !obsCheck.ok
+                    ? obsCheck.reason
+                    : null}
+              </p>
+              <p className="mt-2 text-caption text-text-muted">
+                No ranking is shown because none would mean anything. The optimizer models absolute
+                error on an observable; it does not silently reuse that model for another task.
+              </p>
+            </Card>
+          )}
+
           <Card className="p-4">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-eyebrow uppercase text-text-secondary">5 · Compare strategies — cost vs error</h3>
@@ -402,6 +460,8 @@ export function NewAnalysis() {
                 CALIBRATIONS[recommended.backend_id]?.history.at(-1)?.two_qubit_error_rate.value ?? 0.01
               }
               backendId={recommended.backend_id}
+              logicalQubits={profile.qubit_count}
+              logicalDepth={profile.depth}
             />
           )}
 

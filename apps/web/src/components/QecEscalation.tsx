@@ -10,6 +10,9 @@ export interface QecEscalationProps {
   /** Physical error rate assumed for the chosen hardware — carried into QEC planning. */
   physicalErrorRate: number;
   backendId: string;
+  /** Circuit shape. Without it the observable target cannot be converted into a logical budget. */
+  logicalQubits: number;
+  logicalDepth: number;
 }
 
 /**
@@ -19,7 +22,14 @@ export interface QecEscalationProps {
  * is not "try harder", it is "you need error correction". Rather than leaving QEC as a separate lab
  * the user has to rediscover, this states the ceiling in the workflow and hands the context over.
  */
-export function QecEscalation({ bestRmse, targetError, physicalErrorRate, backendId }: QecEscalationProps) {
+export function QecEscalation({
+  bestRmse,
+  targetError,
+  physicalErrorRate,
+  backendId,
+  logicalQubits,
+  logicalDepth,
+}: QecEscalationProps) {
   const shortfall = bestRmse / targetError;
   return (
     <Card className="border-series-logical/30 p-4">
@@ -62,14 +72,22 @@ export function QecEscalation({ bestRmse, targetError, physicalErrorRate, backen
           </dl>
 
           <Link
-            to={`/qec-lab?target=${encodeURIComponent(targetError)}&p=${encodeURIComponent(physicalErrorRate)}&from=analysis`}
+            to={
+              `/qec-lab?target=${encodeURIComponent(targetError)}` +
+              `&p=${encodeURIComponent(physicalErrorRate)}` +
+              `&nq=${encodeURIComponent(logicalQubits)}` +
+              `&depth=${encodeURIComponent(logicalDepth)}` +
+              `&from=analysis`
+            }
             className="mt-3 inline-flex items-center gap-2 rounded-control border border-series-logical/50 px-3.5 py-2 text-body-s text-series-logical transition-colors hover:bg-row-hover"
           >
             Explore QEC requirements
             <ArrowRight size={15} aria-hidden />
           </Link>
           <p className="mt-1.5 text-caption text-text-muted">
-            Carries the workload target and physical error assumption into QEC planning.
+            Carries the target, the physical error assumption and the circuit shape. QEC planning
+            converts the observable target into a per-round logical budget rather than comparing the
+            two directly — they are different quantities.
           </p>
         </div>
       </div>
