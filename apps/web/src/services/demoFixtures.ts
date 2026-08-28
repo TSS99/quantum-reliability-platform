@@ -56,7 +56,13 @@ export const WORKLOADS: QuantumWorkload[] = [
     qubit_count: 2,
     description:
       'The smallest circuit with entanglement. Used as the control: its ideal expectation value is known exactly, so measured deviation is attributable to noise rather than to approximation.',
-    qasm_excerpt: 'h q[0];\ncx q[0], q[1];\nmeasure q -> c;',
+    qasm: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;`,
   },
   {
     workload_id: 'ghz_8',
@@ -68,7 +74,19 @@ export const WORKLOADS: QuantumWorkload[] = [
     qubit_count: 8,
     description:
       'A linear GHZ ladder. Its depth grows with width, so it exposes idle time on the qubits prepared first — the regime where dynamical decoupling has something to do.',
-    qasm_excerpt: 'h q[0];\nfor i in [0:6] { cx q[i], q[i+1]; }\nmeasure q -> c;',
+    qasm: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[8];
+creg c[8];
+h q[0];
+cx q[0],q[1];
+cx q[1],q[2];
+cx q[2],q[3];
+cx q[3],q[4];
+cx q[4],q[5];
+cx q[5],q[6];
+cx q[6],q[7];
+measure q -> c;`,
   },
   {
     workload_id: 'vqe_h2_ansatz',
@@ -80,7 +98,54 @@ export const WORKLOADS: QuantumWorkload[] = [
     qubit_count: 4,
     description:
       'A hardware-efficient ansatz with three repetition layers. Representative of the depth-versus-expressivity trade-off that makes error mitigation worth costing out.',
-    qasm_excerpt: 'ry(theta[0]) q[0];\n... 3 x [ry layer; cx ring];\nmeasure q -> c;',
+    qasm: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[4];
+creg c[4];
+ry(theta[0]) q[0];
+ry(theta[1]) q[1];
+ry(theta[2]) q[2];
+ry(theta[3]) q[3];
+// entangling layer 1
+cx q[0],q[1];
+cx q[1],q[2];
+cx q[2],q[3];
+cx q[3],q[0];
+ry(theta[4]) q[0];
+ry(theta[5]) q[1];
+ry(theta[6]) q[2];
+ry(theta[7]) q[3];
+rz(phi[0]) q[0];
+rz(phi[1]) q[1];
+rz(phi[2]) q[2];
+rz(phi[3]) q[3];
+// entangling layer 2
+cx q[0],q[1];
+cx q[1],q[2];
+cx q[2],q[3];
+cx q[3],q[0];
+ry(theta[12]) q[0];
+ry(theta[13]) q[1];
+ry(theta[14]) q[2];
+ry(theta[15]) q[3];
+rz(phi[4]) q[0];
+rz(phi[5]) q[1];
+rz(phi[6]) q[2];
+rz(phi[7]) q[3];
+// entangling layer 3
+cx q[0],q[1];
+cx q[1],q[2];
+cx q[2],q[3];
+cx q[3],q[0];
+ry(theta[20]) q[0];
+ry(theta[21]) q[1];
+ry(theta[22]) q[2];
+ry(theta[23]) q[3];
+rz(phi[8]) q[0];
+rz(phi[9]) q[1];
+rz(phi[10]) q[2];
+rz(phi[11]) q[3];
+measure q -> c;`,
   },
   {
     workload_id: 'qaoa_maxcut_6',
@@ -92,7 +157,45 @@ export const WORKLOADS: QuantumWorkload[] = [
     qubit_count: 6,
     description:
       'Two QAOA layers over a ring graph. The heaviest two-qubit gate count in the demo library, so it is where the sampling overhead of mitigation bites hardest.',
-    qasm_excerpt: 'h q;\n2 x [zz-phase over ring edges; rx(beta) q];\nmeasure q -> c;',
+    qasm: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[6];
+creg c[6];
+h q[0];
+h q[1];
+h q[2];
+h q[3];
+h q[4];
+h q[5];
+// cost layer 1 - ring graph
+rzz(gamma[0]) q[0],q[1];
+rzz(gamma[0]) q[1],q[2];
+rzz(gamma[0]) q[2],q[3];
+rzz(gamma[0]) q[3],q[4];
+rzz(gamma[0]) q[4],q[5];
+rzz(gamma[0]) q[5],q[0];
+// mixer layer 1
+rx(beta[0]) q[0];
+rx(beta[0]) q[1];
+rx(beta[0]) q[2];
+rx(beta[0]) q[3];
+rx(beta[0]) q[4];
+rx(beta[0]) q[5];
+// cost layer 2 - ring graph
+rzz(gamma[1]) q[0],q[1];
+rzz(gamma[1]) q[1],q[2];
+rzz(gamma[1]) q[2],q[3];
+rzz(gamma[1]) q[3],q[4];
+rzz(gamma[1]) q[4],q[5];
+rzz(gamma[1]) q[5],q[0];
+// mixer layer 2
+rx(beta[1]) q[0];
+rx(beta[1]) q[1];
+rx(beta[1]) q[2];
+rx(beta[1]) q[3];
+rx(beta[1]) q[4];
+rx(beta[1]) q[5];
+measure q -> c;`,
   },
 ];
 
@@ -105,7 +208,7 @@ export const CIRCUIT_PROFILES: Record<string, CircuitProfile> = {
     qubit_count: 2,
     depth: 3,
     two_qubit_gate_count: 1,
-    single_qubit_gate_count: 2,
+    single_qubit_gate_count: 1,
     measurement_count: 2,
     idle_exposure: q(0, 'ratio'),
     has_mid_circuit_measurement: false,
@@ -117,7 +220,7 @@ export const CIRCUIT_PROFILES: Record<string, CircuitProfile> = {
     qubit_count: 8,
     depth: 9,
     two_qubit_gate_count: 7,
-    single_qubit_gate_count: 9,
+    single_qubit_gate_count: 1,
     measurement_count: 8,
     idle_exposure: q(0.31, 'ratio'),
     has_mid_circuit_measurement: false,
@@ -128,8 +231,8 @@ export const CIRCUIT_PROFILES: Record<string, CircuitProfile> = {
     circuit_fingerprint: 'cf_b208e5c7',
     qubit_count: 4,
     depth: 26,
-    two_qubit_gate_count: 18,
-    single_qubit_gate_count: 44,
+    two_qubit_gate_count: 12,
+    single_qubit_gate_count: 28,
     measurement_count: 4,
     idle_exposure: q(0.22, 'ratio'),
     has_mid_circuit_measurement: false,
@@ -140,8 +243,8 @@ export const CIRCUIT_PROFILES: Record<string, CircuitProfile> = {
     circuit_fingerprint: 'cf_71f3a9d5',
     qubit_count: 6,
     depth: 34,
-    two_qubit_gate_count: 24,
-    single_qubit_gate_count: 42,
+    two_qubit_gate_count: 12,
+    single_qubit_gate_count: 18,
     measurement_count: 6,
     idle_exposure: q(0.18, 'ratio'),
     has_mid_circuit_measurement: false,
