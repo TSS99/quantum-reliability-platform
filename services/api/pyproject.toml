@@ -11,6 +11,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3", "httpx>=0.27", "ruff==0.15.2"]
+# Real-hardware tiers. Optional: the API degrades honestly without them.
+quantum = ["qiskit>=1.2", "qiskit-ibm-runtime>=0.40"]
+qec = ["stim==1.16.0", "pymatching==2.4.0"]
 
 [tool.ruff]
 line-length = 100
