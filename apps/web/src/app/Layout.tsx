@@ -12,10 +12,11 @@ export function Layout() {
   return (
     <div className="relative min-h-screen bg-bg-base text-text-primary">
       <div className="qo-field" aria-hidden />
+      <div className="qo-stars" aria-hidden />
 
       <div className="relative z-10 md:grid md:grid-cols-[248px_1fr]">
         {/* ------------------------------------------------------- sidebar */}
-        <aside className="border-border-hairline bg-bg-sunken/70 backdrop-blur-xl md:min-h-screen md:border-r">
+        <aside className="border-border-hairline bg-bg-sunken/45 backdrop-blur-2xl md:min-h-screen md:border-r">
           <div className="flex items-center justify-between border-b border-border-hairline px-4 py-3.5">
             <NavLink to="/" className="group flex items-center gap-2">
               <span className="relative flex h-7 w-7 items-center justify-center rounded-control border border-border-hairline qo-glass">
@@ -82,7 +83,7 @@ export function Layout() {
         <div className="flex min-w-0 flex-col">
           <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border-hairline bg-bg-base/70 px-4 py-3 backdrop-blur-xl md:px-7">
             <div className="flex items-baseline gap-2">
-              <h1 className="text-heading-m">{current?.label ?? 'Reliability Lab'}</h1>
+              <h1 className="font-display text-[1.55rem] font-normal leading-none">{current?.label ?? 'Reliability Lab'}</h1>
               <span className="hidden text-caption text-text-muted sm:inline">{current?.group}</span>
             </div>
             <button

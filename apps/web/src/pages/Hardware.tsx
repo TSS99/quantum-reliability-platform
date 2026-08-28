@@ -32,7 +32,7 @@ export function Hardware() {
     <div className="flex flex-col gap-5">
       <header>
         <p className="text-eyebrow uppercase text-series-mitigated">Hardware</p>
-        <h2 className="text-display-m">Backend profiles &amp; calibration</h2>
+        <h2 className="font-display text-display-m font-normal">Backend profiles &amp; calibration</h2>
         <p className="mt-1 text-body-s text-text-muted">Simulated device profiles. Unavailable fields read “Not provided”, never zero.</p>
       </header>
 

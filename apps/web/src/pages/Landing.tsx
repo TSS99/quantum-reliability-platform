@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Activity, Gauge, ShieldCheck, Layers, Sparkles } from 'lucide-react';
 import { Rail } from '../components/Rail';
-import { Reveal, KineticText, CountUp, useTilt } from '../components/motion';
+import { Reveal, CountUp, useTilt } from '../components/motion';
 
 const CAPABILITIES = [
   { Icon: Gauge, title: 'Preflight intelligence', body: 'Decide whether a workload should run at all — before it burns QPU time.' },
@@ -32,6 +32,13 @@ export function Landing() {
   return (
     <div className="hx-grain relative min-h-screen overflow-x-hidden bg-bg-base text-text-primary">
       <div className="qo-field" aria-hidden />
+      <div className="qo-stars" aria-hidden />
+      <div className="qo-orbit" style={{ right: -190, top: 80, width: 700, height: 700 }} aria-hidden>
+        <span className="qo-orbit-body" />
+      </div>
+      <div className="qo-orbit qo-orbit-slow" style={{ right: -80, top: 200, width: 460, height: 460 }} aria-hidden>
+        <span className="qo-orbit-body" />
+      </div>
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 py-20 md:py-28">
         {/* ---------------------------------------------------------- hero */}
@@ -44,8 +51,8 @@ export function Landing() {
           {/* The gradient line is NOT split into per-character spans: background-clip:text cannot
               clip onto inline-block children, which renders them invisible. It gets its own
               block-level reveal instead. */}
-          <h1 className="max-w-4xl text-display-l leading-[1.04] md:text-[4rem]">
-            <KineticText text="Reliability intelligence for" />{' '}
+          <h1 className="max-w-4xl font-display text-display-l font-normal leading-[1.0] md:text-[5.2rem]">
+            Reliability intelligence for{' '}
             <span className="hx-gradline hx-breathe bg-gradient-to-r from-series-mitigated via-series-mitigated to-series-logical bg-clip-text text-transparent">
               quantum workloads
             </span>
@@ -63,14 +70,14 @@ export function Landing() {
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 to="/overview"
-                className="hx-mag hx-shine hx-border group inline-flex items-center gap-2 rounded-control bg-action-bg px-6 py-3 text-body-s font-semibold text-action-fg"
+                className="hx-mag hx-shine hx-border group inline-flex items-center gap-2 rounded-chip bg-action-bg px-7 py-3.5 text-body-s font-semibold text-action-fg"
               >
                 Launch Reliability Lab
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
               </Link>
               <a
                 href="#workflow"
-                className="hx-mag inline-flex items-center gap-2 rounded-control border border-border-control px-6 py-3 text-body-s text-text-secondary hover:text-text-primary"
+                className="hx-mag inline-flex items-center gap-2 rounded-chip border border-border-control px-7 py-3.5 text-body-s text-text-secondary hover:text-text-primary"
               >
                 <Sparkles size={15} aria-hidden /> Explore the workflow
               </a>
@@ -174,13 +181,13 @@ export function Landing() {
         {/* ----------------------------------------------------- final cta */}
         <Reveal as="scale" className="mt-24">
           <section className="hx-border hx-shine relative overflow-hidden rounded-card p-10 text-center qo-glass">
-            <h2 className="text-display-m">See it decide</h2>
+            <h2 className="font-display text-display-m font-normal">See it decide</h2>
             <p className="mx-auto mt-3 max-w-xl text-body-s text-text-secondary">
               Pick a workload, set a reliability goal, and watch the optimizer rule strategies in — or out.
             </p>
             <Link
               to="/new-analysis"
-              className="hx-mag hx-border mt-7 inline-flex items-center gap-2 rounded-control bg-action-bg px-6 py-3 text-body-s font-semibold text-action-fg"
+              className="hx-mag hx-border mt-7 inline-flex items-center gap-2 rounded-chip bg-action-bg px-7 py-3.5 text-body-s font-semibold text-action-fg"
             >
               Run an analysis <ArrowRight size={16} aria-hidden />
             </Link>

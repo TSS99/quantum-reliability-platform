@@ -13,7 +13,7 @@ export function Strategies() {
     <div className="flex flex-col gap-5">
       <header>
         <p className="text-eyebrow uppercase text-series-mitigated">Strategies</p>
-        <h2 className="text-display-m">Error-management technique catalog</h2>
+        <h2 className="font-display text-display-m font-normal">Error-management technique catalog</h2>
         <p className="mt-1 max-w-2xl text-body-s text-text-muted">
           Every technique the optimizer can offer, with its honest cost. Sampling overhead is a
           shot multiplier (≥ 1) — mitigation buys accuracy with more measurements, never fewer.
