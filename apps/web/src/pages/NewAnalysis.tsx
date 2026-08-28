@@ -28,6 +28,10 @@ export function NewAnalysis() {
   const [targetError, setTargetError] = useState(DEFAULT_GOAL.target_error);
   const [source, setSource] = useState<'example' | 'custom'>('example');
   const [qasm, setQasm] = useState(QASM_TEMPLATES[0]!.qasm);
+  // RECON-10 / SCIENTIFIC_ASSUMPTIONS: target_error is absolute error on a NORMALISED OBSERVABLE.
+  // A circuit without a declared estimand has no defined error, so we require one.
+  const [taskType, setTaskType] = useState<'observable' | 'sampling'>('observable');
+  const [observable, setObservable] = useState('ZZ');
 
   const workload = WORKLOADS.find((w) => w.workload_id === workloadId)!;
 
@@ -38,7 +42,7 @@ export function NewAnalysis() {
     try {
       const parsed = parseQasm(qasm);
       const cal = CALIBRATIONS[BACKENDS[0]!.backend_id]!;
-      return { parsed, profile: toCircuitProfile(parsed, cal), error: null as string | null };
+      return { parsed, profile: toCircuitProfile(parsed, cal, qasm), error: null as string | null };
     } catch (e) {
       return { parsed: null, profile: null, error: e instanceof QasmError ? e.message : 'Could not parse this circuit.' };
     }
@@ -131,6 +135,49 @@ export function NewAnalysis() {
                   ))}
                 </div>
 
+                {/* Without a declared estimand, "error" has no meaning for a user circuit
+                    (SCIENTIFIC_ASSUMPTIONS: absolute error on a normalised observable). */}
+                <div className="rounded-control border border-border-hairline bg-bg-base p-2.5">
+                  <div className="text-caption text-text-muted">What are you estimating?</div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {([['observable', 'Observable ⟨O⟩'], ['sampling', 'Sampling distribution']] as const).map(([id, label]) => (
+                      <button
+                        key={id}
+                        onClick={() => setTaskType(id)}
+                        aria-pressed={taskType === id}
+                        className={
+                          'rounded-chip border px-2 py-1 text-caption transition-colors ' +
+                          (taskType === id
+                            ? 'border-border-control bg-row-selected text-text-primary'
+                            : 'border-border-hairline text-text-secondary hover:bg-row-hover')
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {taskType === 'observable' ? (
+                    <div className="mt-2">
+                      <label htmlFor="obs" className="text-caption text-text-muted">Pauli observable</label>
+                      <input
+                        id="obs"
+                        value={observable}
+                        onChange={(e) => setObservable(e.target.value.toUpperCase())}
+                        className="mono mt-1 w-full rounded-control border border-border-hairline bg-bg-surface px-2 py-1 text-body-s text-text-primary outline-none focus:border-series-mitigated"
+                        placeholder="ZZ"
+                      />
+                      <p className="mt-1 text-caption text-text-muted">
+                        Target error is absolute error on ⟨{observable || 'O'}⟩, normalised to [-1, 1].
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-caption text-state-warning">
+                      Sampling tasks are measured by distribution distance (TVD), not observable error —
+                      expectation-value strategies such as ZNE do not apply. Not yet modelled.
+                    </p>
+                  )}
+                </div>
+
                 <label htmlFor="qasm" className="sr-only">OpenQASM circuit</label>
                 <textarea
                   id="qasm"
@@ -152,6 +199,17 @@ export function NewAnalysis() {
                       Parsed OpenQASM {custom.parsed.qasm_version} · {custom.parsed.qubit_count} qubits ·{' '}
                       {custom.parsed.total_gate_count} gates
                     </div>
+                    {custom.parsed.has_mid_circuit_measurement && (
+                      <div className="mt-1 text-caption text-state-warning">
+                        Mid-circuit measurement detected — ZNE folding is not valid for this circuit.
+                      </div>
+                    )}
+                    {custom.parsed.dynamic_uncertain && (
+                      <div className="mt-1 text-caption text-state-uncertain">
+                        Dynamic-circuit compatibility: uncertain — exact backend analysis required
+                        before ZNE eligibility can be confirmed.
+                      </div>
+                    )}
                     <div className="mt-1 flex flex-wrap gap-1">
                       {Object.entries(custom.parsed.gate_histogram).slice(0, 8).map(([g, n]) => (
                         <span key={g} className="mono rounded-chip border border-border-hairline px-1.5 text-[10px] text-text-muted">
@@ -178,7 +236,7 @@ export function NewAnalysis() {
                 ['2Q gates', profile.two_qubit_gate_count],
                 ['measurements', profile.measurement_count],
                 ['idle exposure', fmtSci(profile.idle_exposure.value)],
-                ['raw error', fmtSci(profile.estimated_raw_error.value)],
+                ['dynamic', profile.has_mid_circuit_measurement ? 'mid-circuit' : 'static'],
               ] as [string, string | number][]).map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-caption text-text-muted">{k}</dt>
@@ -186,10 +244,13 @@ export function NewAnalysis() {
                 </div>
               ))}
             </dl>
+            <p className="mt-2 border-t border-border-hairline pt-2 text-caption text-text-muted">
+              Structure only. Predicted raw error is backend-dependent and is shown per candidate below.
+            </p>
           </Card>
 
           <Card className="p-4">
-            <h3 className="mb-2 text-eyebrow uppercase text-text-secondary">3 · Reliability goal</h3>
+            <h3 className="mb-2 text-eyebrow uppercase text-text-secondary">3 · Reliability objective</h3>
             <div className="mb-3 flex flex-wrap gap-1.5">
               {PRESETS.map((p) => (
                 <button
@@ -221,6 +282,27 @@ export function NewAnalysis() {
               className="mt-1 w-full"
               style={{ accentColor: 'var(--color-series-mitigated)' }}
             />
+
+            {/* These constraints decide feasibility, so a verdict is not auditable while they are
+                hidden. Shown explicitly rather than applied silently. */}
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border-hairline pt-2.5 text-caption">
+              <div className="flex justify-between gap-2">
+                <dt className="text-text-muted">confidence</dt>
+                <dd className="metric text-text-secondary">{(DEFAULT_GOAL.statistical_confidence * 100).toFixed(0)}%</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-text-muted">max cost</dt>
+                <dd className="metric text-text-secondary">{money(DEFAULT_GOAL.max_cost_usd)}</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-text-muted">max runtime</dt>
+                <dd className="metric text-text-secondary">{DEFAULT_GOAL.max_runtime_seconds}s</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-text-muted">priority</dt>
+                <dd className="metric text-text-secondary">{priority.replace('_', ' ')}</dd>
+              </div>
+            </dl>
           </Card>
         </div>
 

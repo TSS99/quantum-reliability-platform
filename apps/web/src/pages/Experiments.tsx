@@ -31,8 +31,9 @@ function receiptOf(run: Run) {
     strategy: { id: p.strategy.strategy_id, name: p.strategy.display_name, shots: p.shots },
     raw_error: run.rawError,
     processed_error: p.rmse.value,
-    improvement: Number((1 - p.rmse.value / run.rawError).toFixed(3)),
-    statistical_confidence: p.statistical_confidence,
+    predicted_error_reduction: Number((1 - p.rmse.value / run.rawError).toFixed(3)),
+    observed_error_reduction: null, // populated only after a real execution
+    requested_confidence_level: p.statistical_confidence,
     strategy_confidence: p.strategy_confidence,
     estimated_cost_usd: p.estimated_cost_usd.value,
     estimated_qpu_seconds: p.estimated_qpu_seconds.value,
@@ -125,20 +126,27 @@ export function Experiments() {
                 {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy JSON'}
               </button>
             </div>
-            <div className="flex items-center justify-between rounded-control border border-border-hairline bg-state-healthy-bg p-2">
-              <span className="text-body-s text-state-healthy">improvement</span>
-              <span className="metric text-metric-m text-state-healthy">{(receipt.improvement * 100).toFixed(0)}%</span>
+            <div className="rounded-control border border-border-hairline bg-state-healthy-bg p-2">
+              <div className="flex items-center justify-between">
+              <span className="text-body-s text-state-healthy">predicted error reduction</span>
+              <span className="metric text-metric-m text-state-healthy">
+                {(receipt.predicted_error_reduction * 100).toFixed(0)}%
+              </span>
+              </div>
+              <div className="mt-1 text-caption text-state-healthy/80">
+                Model estimate — both sides are predicted. Observed reduction appears after a real run.
+              </div>
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-body-s">
               {[
-                ['raw error', fmtSci(receipt.raw_error)],
-                ['processed', fmtSci(receipt.processed_error)],
-                ['stat. confidence', (receipt.statistical_confidence * 100).toFixed(0) + '%'],
-                ['strategy conf.', (receipt.strategy_confidence * 100).toFixed(0) + '%'],
+                ['raw (predicted)', fmtSci(receipt.raw_error)],
+                ['processed (predicted)', fmtSci(receipt.processed_error)],
+                ['requested confidence', (receipt.requested_confidence_level * 100).toFixed(0) + '%'],
+                ['strategy conf. (heuristic)', (receipt.strategy_confidence * 100).toFixed(0) + '%'],
                 ['est. cost', money(receipt.estimated_cost_usd)],
                 ['est. QPU time', receipt.estimated_qpu_seconds.toFixed(0) + 's'],
-                ['actual runtime', 'null (demo)'],
-                ['actual cost', 'null (demo)'],
+                ['observed runtime', 'not executed'],
+                ['observed cost', 'not executed'],
               ].map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-caption text-text-muted">{k}</dt>
