@@ -51,3 +51,18 @@ test('Flow D — every route in the 9-route IA is reachable', async ({ page }) =
     await expect(page.getByRole('heading').first()).toBeVisible();
   }
 });
+
+
+// Regression: the app runs on HashRouter, so an in-page href="#workflow" would hijack the router
+// hash and render a blank/404 view. The control must scroll and leave the route intact.
+test('Explore the workflow scrolls without breaking the route', async ({ page }) => {
+  await page.goto('/');
+  const before = page.url();
+  await page.getByRole('button', { name: /explore the workflow/i }).click();
+  await page.waitForTimeout(700);
+  // still on the landing route — not navigated to a dead #workflow route
+  expect(page.url()).toBe(before);
+  await expect(page.getByRole('heading', { name: /reliability intelligence/i })).toBeVisible();
+  // and the workflow section is now in view
+  await expect(page.getByText('Submit workload')).toBeInViewport();
+});

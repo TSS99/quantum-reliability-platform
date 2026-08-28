@@ -28,6 +28,16 @@ function TiltCard({ Icon, title, body }: (typeof CAPABILITIES)[number]) {
   );
 }
 
+// The app runs on HashRouter, so a plain href="#workflow" would overwrite the router hash
+// ("#/" -> "#workflow") and route to nothing — the 404 users hit. Scroll the section into view
+// instead and leave the route untouched.
+function scrollToWorkflow() {
+  const el = document.getElementById('workflow');
+  if (!el) return;
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+}
+
 export function Landing() {
   return (
     <div className="hx-grain relative min-h-screen overflow-x-hidden bg-bg-base text-text-primary">
@@ -75,12 +85,13 @@ export function Landing() {
                 Launch Reliability Lab
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
               </Link>
-              <a
-                href="#workflow"
+              <button
+                type="button"
+                onClick={scrollToWorkflow}
                 className="hx-mag inline-flex items-center gap-2 rounded-chip border border-border-control px-7 py-3.5 text-body-s text-text-secondary hover:text-text-primary"
               >
                 <Sparkles size={15} aria-hidden /> Explore the workflow
-              </a>
+              </button>
             </div>
           </Reveal>
 
