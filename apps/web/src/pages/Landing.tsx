@@ -243,6 +243,83 @@ export function Landing() {
           </Reveal>
         </section>
 
+
+        {/* ------------------------------------------------------ the problem */}
+        {/* The page previously went hero -> feature list, which asks the reader to accept that a
+            problem exists before it has been stated. These two sections make the argument. */}
+        <section className="mt-24">
+          <Reveal>
+            <h2 className="text-eyebrow uppercase text-text-secondary">The problem</h2>
+            <p className="mt-3 max-w-3xl font-display text-display-m font-normal leading-tight">
+              Your circuit ran. Nothing tells you whether the answer is right.
+            </p>
+            <p className="mt-4 max-w-2xl text-body-m text-text-secondary">
+              A quantum result arrives with no error bar attached to the thing you actually care
+              about. Hardware noise moves hour to hour, mitigation costs shots you have to pay for,
+              and the choice between strategies is usually made by whichever one the last paper
+              used. That is a guess wearing the clothes of a decision.
+            </p>
+          </Reveal>
+
+          <div className="mt-8 grid gap-px overflow-hidden rounded-card border border-border-hairline bg-border-hairline md:grid-cols-3">
+            {[
+              {
+                t: 'Noise is not a constant',
+                d: 'Readout and two-qubit error rates drift between calibrations. A strategy chosen against last week’s device can be the wrong one today.',
+              },
+              {
+                t: 'Mitigation is not free',
+                d: 'ZNE multiplies your shot count. PEC can multiply it by orders of magnitude. The right question is not “does it reduce error” but “is the reduction worth what it costs”.',
+              },
+              {
+                t: 'Mitigation has a floor',
+                d: 'Past a certain target, no amount of sampling helps — you need error correction, more qubits and syndrome rounds. Knowing where that line sits is the decision.',
+              },
+            ].map((c, i) => (
+              <Reveal key={c.t} delay={i * 90}>
+                <div className="h-full bg-bg-surface/80 p-5 backdrop-blur-sm">
+                  <h3 className="text-heading-m text-text-primary">{c.t}</h3>
+                  <p className="mt-2 text-body-s text-text-secondary">{c.d}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ----------------------------------------------------- the approach */}
+        <section className="mt-24">
+          <Reveal>
+            <h2 className="text-eyebrow uppercase text-text-secondary">The approach</h2>
+            <p className="mt-3 max-w-3xl font-display text-display-m font-normal leading-tight">
+              Treat it as a costed decision, and show the working.
+            </p>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <ol className="mt-8 grid gap-px overflow-hidden rounded-card border border-border-hairline bg-border-hairline sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { n: '01', t: 'Read the circuit', d: 'Structure, two-qubit weight, idle exposure, dynamic features — parsed from your OpenQASM, not assumed.' },
+                { n: '02', t: 'Read the hardware', d: 'Per-qubit readout, T1/T2 and coupler error from the device’s own calibration, on absolute scales you can compare across machines.' },
+                { n: '03', t: 'Rank the options', d: 'Every eligible strategy scored on predicted error, cost and runtime, with the ones your constraints rule out shown as ruled out.' },
+                { n: '04', t: 'Keep the evidence', d: 'What was predicted, what was observed, and on which calibration — so the claim survives someone checking it.' },
+              ].map((st) => (
+                <li key={st.n} className="bg-bg-surface/80 p-5 backdrop-blur-sm">
+                  <span className="metric text-caption text-series-mitigated">{st.n}</span>
+                  <h3 className="mt-1.5 text-heading-m text-text-primary">{st.t}</h3>
+                  <p className="mt-1.5 text-body-s text-text-secondary">{st.d}</p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+
+          <Reveal delay={200}>
+            <p className="mt-6 max-w-2xl text-body-s text-text-muted">
+              Every number on this site is computed in your browser from seeded demo devices, and is
+              labelled as such. Nothing here is a measurement from real hardware unless it says it is.
+            </p>
+          </Reveal>
+        </section>
+
         {/* ------------------------------------------------- signature rail */}
         <Reveal as="scale" className="mt-24">
           <section className="hx-border hx-scan relative overflow-hidden rounded-card p-6 qo-glass" style={{ ['--scan-h' as string]: '220px' }}>
