@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The product mark: a noisy trace resolving into a clean one. -->
+  <rect width="32" height="32" rx="7" fill="#08090b"/>
+  <path d="M3 16 5 9 7 23 9 11 11 21 13 13 15 18" fill="none" stroke="#26bcc6" stroke-opacity=".45" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M15 18q3-9 6 0t6 0" fill="none" stroke="#26bcc6" stroke-width="1.9" stroke-linecap="round"/>
+</svg>

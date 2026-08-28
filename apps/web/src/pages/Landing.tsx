@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Activity, Gauge, ShieldCheck, Layers, Sparkles } from 'lucide-react';
 import { Rail } from '../components/Rail';
@@ -35,11 +36,23 @@ function TiltCard({ Icon, title, body }: (typeof CAPABILITIES)[number]) {
 // The app runs on HashRouter, so a plain href="#workflow" would overwrite the router hash
 // ("#/" -> "#workflow") and route to nothing — the 404 users hit. Scroll the section into view
 // instead and leave the route untouched.
-function scrollToWorkflow() {
-  const el = document.getElementById('workflow');
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
   if (!el) return;
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+}
+
+const scrollToWorkflow = () => scrollToSection('workflow');
+
+/** In-page nav. A button, not an anchor, because no href can be written here that the router
+ *  would not consume — see the note above. */
+function SectionLink({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <button type="button" onClick={() => scrollToSection(id)} className="hover:text-text-primary">
+      {children}
+    </button>
+  );
 }
 
 /** The hero's right-hand side: an actual optimizer run, not an illustration. */
@@ -139,9 +152,9 @@ export function Landing() {
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4" aria-label="Site">
           <span className="font-display text-[1.35rem]">QRP</span>
           <div className="hidden items-center gap-6 text-body-s text-text-secondary md:flex">
-            <a href="#workflow" className="hover:text-text-primary">Workflow</a>
-            <a href="#capabilities" className="hover:text-text-primary">Capabilities</a>
-            <a href="#continuum" className="hover:text-text-primary">QEM → QEC</a>
+            <SectionLink id="workflow">Workflow</SectionLink>
+            <SectionLink id="capabilities">Capabilities</SectionLink>
+            <SectionLink id="continuum">QEM → QEC</SectionLink>
             <a
               href="https://github.com/TSS99/quantum-reliability-platform/blob/main/docs/DEMO_VS_REAL.md"
               target="_blank" rel="noreferrer" className="hover:text-text-primary"

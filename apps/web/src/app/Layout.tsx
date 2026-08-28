@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Sun, Moon, Waves } from 'lucide-react';
+import { Sun, Moon, Waves, Menu, X } from 'lucide-react';
 import { ROUTES, NAV_GROUPS } from './nav';
 import { useTheme } from './useTheme';
 import { dataSource } from '../services/ReliabilityDataSource';
@@ -9,6 +10,28 @@ export function Layout() {
   const { pathname } = useLocation();
   const current = ROUTES.find((r) => r.path === pathname);
 
+  // Below `md` the sidebar becomes a drawer. Above it, `open` is inert — the sidebar is always
+  // laid out by the grid, so the same markup serves both without duplicating the nav.
+  const [open, setOpen] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Navigating is the drawer's natural dismissal; leaving it open over the new page is a bug.
+  useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', onKey);
+    // The drawer covers the page on small screens; the page behind it must not scroll under it.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   return (
     <div className="relative min-h-screen bg-bg-base text-text-primary">
       <div className="qo-field" aria-hidden />
@@ -16,7 +39,25 @@ export function Layout() {
 
       <div className="relative z-10 md:grid md:grid-cols-[248px_1fr]">
         {/* ------------------------------------------------------- sidebar */}
-        <aside className="border-border-hairline bg-bg-sunken/45 backdrop-blur-2xl md:min-h-screen md:border-r">
+        {/* Scrim only exists while the drawer is open, and only below md. */}
+        {open && (
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-30 bg-bg-base/70 backdrop-blur-sm md:hidden"
+          />
+        )}
+
+        <aside
+          id="primary-nav"
+          className={
+            'border-border-hairline bg-bg-sunken/45 backdrop-blur-2xl md:min-h-screen md:border-r ' +
+            'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:w-[268px] max-md:overflow-y-auto ' +
+            'max-md:border-r max-md:transition-transform max-md:duration-200 ' +
+            (open ? 'max-md:translate-x-0' : 'max-md:invisible max-md:-translate-x-full')
+          }
+        >
           <div className="flex items-center justify-between border-b border-border-hairline px-4 py-3.5">
             <NavLink to="/" className="group flex items-center gap-2">
               <span className="relative flex h-7 w-7 items-center justify-center rounded-control border border-border-hairline qo-glass">
@@ -30,6 +71,15 @@ export function Layout() {
                 Demo
               </span>
             )}
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close navigation"
+              className="rounded-control border border-border-control p-1.5 text-text-secondary hover:bg-row-hover md:hidden"
+            >
+              <X size={15} aria-hidden />
+            </button>
           </div>
 
           <nav aria-label="Primary" className="px-2.5 py-3">
@@ -82,7 +132,17 @@ export function Layout() {
         {/* --------------------------------------------------------- main */}
         <div className="flex min-w-0 flex-col">
           <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border-hairline bg-bg-base/70 px-4 py-3 backdrop-blur-xl md:px-7">
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                aria-label="Open navigation"
+                aria-expanded={open}
+                aria-controls="primary-nav"
+                className="rounded-control border border-border-control p-1.5 text-text-secondary transition-colors hover:bg-row-hover hover:text-text-primary md:hidden"
+              >
+                <Menu size={16} aria-hidden />
+              </button>
               <h1 className="font-display text-[1.55rem] font-normal leading-none">{current?.label ?? 'Reliability Lab'}</h1>
               <span className="hidden text-caption text-text-muted sm:inline">{current?.group}</span>
             </div>
