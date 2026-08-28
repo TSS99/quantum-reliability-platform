@@ -119,42 +119,76 @@ export function Experiments() {
         </Card>
 
         {receipt && active && (
-          <Card className="flex flex-col gap-3 p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-heading-m">Reliability receipt</h3>
-              <button onClick={copy} className="inline-flex items-center gap-1.5 rounded-control border border-border-control px-2 py-1 text-caption text-text-secondary hover:bg-row-hover">
+          <Card lit className="flex flex-col gap-0 overflow-hidden p-0">
+            {/* The receipt is the product's evidence artifact, so its structure states plainly what
+                is a MODEL PREDICTION and what is a MEASUREMENT. In demo mode the observed column is
+                empty by construction — that emptiness is the honest signal, not a gap to fill. */}
+            <div className="flex items-center justify-between border-b border-border-hairline px-4 py-3">
+              <div>
+                <div className="text-eyebrow uppercase text-text-secondary">Reliability receipt</div>
+                <div className="metric mt-0.5 text-caption text-text-muted">{receipt.run_id}</div>
+              </div>
+              <button
+                onClick={copy}
+                className="inline-flex items-center gap-1.5 rounded-control border border-border-control px-2 py-1 text-caption text-text-secondary hover:bg-row-hover"
+              >
                 {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy JSON'}
               </button>
             </div>
-            <div className="rounded-control border border-border-hairline bg-state-healthy-bg p-2">
-              <div className="flex items-center justify-between">
-              <span className="text-body-s text-state-healthy">predicted error reduction</span>
-              <span className="metric text-metric-m text-state-healthy">
-                {(receipt.predicted_error_reduction * 100).toFixed(0)}%
-              </span>
-              </div>
-              <div className="mt-1 text-caption text-state-healthy/80">
-                Model estimate — both sides are predicted. Observed reduction appears after a real run.
+
+            <div className="border-b border-border-hairline px-4 py-3">
+              <div className="text-caption text-text-muted">workload</div>
+              <div className="text-body-s text-text-primary">{receipt.workload}</div>
+              <div className="metric mt-1 text-caption text-text-muted">
+                {receipt.circuit_fingerprint} · {receipt.backend_id} · {receipt.strategy.name}
               </div>
             </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-body-s">
-              {[
-                ['raw (predicted)', fmtSci(receipt.raw_error)],
-                ['processed (predicted)', fmtSci(receipt.processed_error)],
-                ['requested confidence', (receipt.requested_confidence_level * 100).toFixed(0) + '%'],
-                ['strategy conf. (heuristic)', (receipt.strategy_confidence * 100).toFixed(0) + '%'],
-                ['est. cost', money(receipt.estimated_cost_usd)],
-                ['est. QPU time', receipt.estimated_qpu_seconds.toFixed(0) + 's'],
-                ['observed runtime', 'not executed'],
-                ['observed cost', 'not executed'],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <dt className="text-caption text-text-muted">{k}</dt>
-                  <dd className="metric text-metric-s text-text-primary">{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <details className="text-caption">
+
+            {/* Two columns, always: prediction beside evidence. */}
+            <div className="grid grid-cols-2 divide-x divide-border-hairline border-b border-border-hairline">
+              <div className="px-4 py-3">
+                <div className="text-eyebrow uppercase text-series-mitigated">Predicted</div>
+                <dl className="mt-2 space-y-1.5 text-body-s">
+                  <div className="flex justify-between gap-2"><dt className="text-text-muted">raw</dt><dd className="metric text-text-primary">{fmtSci(receipt.raw_error)}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-text-muted">processed</dt><dd className="metric text-text-primary">{fmtSci(receipt.processed_error)}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-text-muted">cost</dt><dd className="metric text-text-primary">{money(receipt.estimated_cost_usd)}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-text-muted">QPU time</dt><dd className="metric text-text-primary">{receipt.estimated_qpu_seconds.toFixed(0)}s</dd></div>
+                </dl>
+              </div>
+              <div className="px-4 py-3">
+                <div className="text-eyebrow uppercase text-text-muted">Observed</div>
+                <dl className="mt-2 space-y-1.5 text-body-s">
+                  {['raw', 'processed', 'cost', 'QPU time'].map((k) => (
+                    <div key={k} className="flex justify-between gap-2">
+                      <dt className="text-text-muted">{k}</dt>
+                      <dd className="text-text-muted">—</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="mt-2 text-caption text-text-muted">not executed</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-body-s text-text-secondary">predicted error reduction</span>
+              <span className="metric text-metric-m text-series-mitigated">
+                {(receipt.predicted_error_reduction * 100).toFixed(0)}%
+              </span>
+            </div>
+
+            <div className="border-t border-border-hairline bg-bg-base px-4 py-2.5">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-muted">
+                <span>execution mode <span className="metric text-text-secondary">{receipt.execution_mode}</span></span>
+                <span>requested confidence <span className="metric text-text-secondary">{(receipt.requested_confidence_level * 100).toFixed(0)}%</span></span>
+                <span>schema <span className="metric text-text-secondary">{receipt.schema_version}</span></span>
+              </div>
+              <p className="mt-1.5 text-caption text-text-muted">
+                Both error figures are model estimates. Observed values populate only after a real
+                hardware run, at which point prediction and evidence can be compared.
+              </p>
+            </div>
+
+            <details className="border-t border-border-hairline px-4 py-2 text-caption">
               <summary className="cursor-pointer text-text-secondary">Raw receipt JSON</summary>
               <pre className="mono mt-1 max-h-56 overflow-auto rounded-control border border-border-hairline bg-bg-base p-2 text-[11px] text-text-secondary">
                 {JSON.stringify(receipt, null, 2)}
