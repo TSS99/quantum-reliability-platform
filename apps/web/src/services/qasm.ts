@@ -21,6 +21,16 @@ export type ParseCode =
   | 'PAYLOAD_TOO_LARGE'
   | 'UNSUPPORTED_CIRCUIT_FEATURE';
 
+/** One operation, in program order, with the wires it acts on. Enough to draw the circuit. */
+export interface CircuitOp {
+  name: string;
+  qubits: number[];
+  kind: '1q' | '2q' | 'nq' | 'measure' | 'reset';
+}
+
+/** Drawing a 20k-gate circuit helps nobody and locks the tab; the diagram is truncated instead. */
+export const MAX_DIAGRAM_OPS = 512;
+
 export interface ParsedCircuit {
   qubit_count: number;
   clbit_count: number;
@@ -39,6 +49,9 @@ export interface ParsedCircuit {
   /** True when the browser scanner cannot decide; the UI must say so rather than guess. */
   dynamic_uncertain: boolean;
   qasm_version: '2' | '3';
+  /** Ordered operations for rendering, capped at MAX_DIAGRAM_OPS. */
+  ops: CircuitOp[];
+  ops_truncated: boolean;
   warnings: string[];
 }
 
@@ -91,6 +104,22 @@ export function parseQasm(source: string): ParsedCircuit {
   let sawMeasure = false;
   let midCircuit = false;
   const unknown = new Set<string>();
+  const ops: CircuitOp[] = [];
+  let opsTruncated = false;
+
+  /** Operand wires. `h q[0]` -> [0]; a bare register (`h q`) means every wire. */
+  const wiresOf = (operands: string) => {
+    const idx = [...operands.matchAll(/\b\w+\s*\[\s*(\d+)\s*\]/g)].map((m) => Number(m[1]));
+    if (idx.length) return idx.filter((i) => i < qubits);
+    return /\b\w+\b/.test(operands) ? Array.from({ length: qubits }, (_, i) => i) : [];
+  };
+  const push = (name: string, wires: number[], kind: CircuitOp['kind']) => {
+    if (ops.length >= MAX_DIAGRAM_OPS) {
+      opsTruncated = true;
+      return;
+    }
+    if (wires.length) ops.push({ name, qubits: wires, kind });
+  };
 
   for (const line of body.split(/[\n;]/)) {
     const m = /^\s*([a-zA-Z][a-zA-Z0-9_]*)/.exec(line);
@@ -104,6 +133,8 @@ export function parseQasm(source: string): ParsedCircuit {
       meas += n;
       hist[t] = (hist[t] ?? 0) + n;
       sawMeasure = true;
+      const target = /measure\s+([^-]+)->/.exec(line)?.[1] ?? '';
+      for (const w of wiresOf(target)) push('measure', [w], 'measure');
     } else if (ONE_Q.has(t) || TWO_Q.has(t) || THREE_Q.has(t)) {
       // a quantum op AFTER a measurement is the definition of mid-circuit measurement
       if (sawMeasure) midCircuit = true;
@@ -111,9 +142,13 @@ export function parseQasm(source: string): ParsedCircuit {
       else if (TWO_Q.has(t)) two++;
       else multi++;
       hist[t] = (hist[t] ?? 0) + 1;
+      // Operands are whatever follows the gate name and any (parameter) list.
+      const operands = line.replace(/^\s*[a-zA-Z][a-zA-Z0-9_]*\s*(\([^)]*\))?/, '');
+      push(t, wiresOf(operands), ONE_Q.has(t) ? '1q' : TWO_Q.has(t) ? '2q' : 'nq');
     } else if (t === 'reset') {
       if (sawMeasure) midCircuit = true;
       hist[t] = (hist[t] ?? 0) + 1;
+      push('reset', wiresOf(line.replace(/^\s*reset/, '')), 'reset');
     } else unknown.add(t);
   }
 
@@ -155,6 +190,8 @@ export function parseQasm(source: string): ParsedCircuit {
     has_mid_circuit_measurement: midCircuit,
     dynamic_uncertain: dynamicUncertain,
     qasm_version: version,
+    ops,
+    ops_truncated: opsTruncated,
     warnings,
   };
 }

@@ -74,7 +74,9 @@ export interface QuantumWorkload {
   family: 'entanglement' | 'variational' | 'combinatorial';
   qubit_count: number;
   description: string;
-  qasm_excerpt: string;
+  /** Complete OpenQASM source. It is parsed to draw the diagram and to derive the gate counts
+   *  in CIRCUIT_PROFILES, so the picture, the counts and the costing cannot disagree. */
+  qasm: string;
 }
 
 export interface CircuitProfile {
