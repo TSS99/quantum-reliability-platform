@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Activity, Gauge, ShieldCheck, Layers, Sparkles } from 'lucide-react';
 import { Rail } from '../components/Rail';
 import { Reveal, CountUp, useTilt } from '../components/motion';
+import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
+import { DEFAULT_GOAL, optimize } from '../services/demoEngine';
+import { fmtSci, money } from '../components/charts/scale';
 
 const CAPABILITIES = [
   { Icon: Gauge, title: 'Preflight intelligence', body: 'Decide whether a workload should run at all — before it burns QPU time.' },
@@ -38,9 +41,75 @@ function scrollToWorkflow() {
   el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
 }
 
+/** The hero's right-hand side: an actual optimizer run, not an illustration. */
+function HeroAnalysis() {
+  const w = WORKLOADS[0]!;
+  const res = optimize(CIRCUIT_PROFILES[w.workload_id]!, BACKENDS, CALIBRATIONS, DEFAULT_GOAL);
+  const bestPerStrategy = new Map<string, (typeof res.plans)[number]>();
+  for (const p of res.plans) {
+    if (p.feasibility !== 'feasible') continue;
+    const prev = bestPerStrategy.get(p.strategy.strategy_id);
+    if (!prev || p.rmse.value < prev.rmse.value) bestPerStrategy.set(p.strategy.strategy_id, p);
+  }
+  const ranked = [...bestPerStrategy.values()].sort((a, b) => a.rmse.value - b.rmse.value).slice(0, 4);
+  const best = res.plans.find((p) => p.plan_id === res.recommended_plan_id) ?? null;
+
+  return (
+    <div className="rounded-card p-5 qo-glass qo-lit">
+      <div className="flex items-baseline justify-between">
+        <span className="text-eyebrow uppercase text-text-secondary">Live analysis</span>
+        <span className="text-caption text-text-muted">{w.display_name}</span>
+      </div>
+
+      <dl className="mt-3 grid grid-cols-3 gap-2 border-b border-border-hairline pb-3 text-caption">
+        <div><dt className="text-text-muted">target error</dt><dd className="metric text-text-primary">{fmtSci(DEFAULT_GOAL.target_error)}</dd></div>
+        <div><dt className="text-text-muted">max cost</dt><dd className="metric text-text-primary">{money(DEFAULT_GOAL.max_cost_usd)}</dd></div>
+        <div><dt className="text-text-muted">max time</dt><dd className="metric text-text-primary">{DEFAULT_GOAL.max_runtime_seconds}s</dd></div>
+      </dl>
+
+      <table className="mt-3 w-full text-body-s">
+        <thead>
+          <tr className="text-caption text-text-muted">
+            <th className="pb-1 text-left font-medium">Strategy</th>
+            <th className="pb-1 text-right font-medium">Error</th>
+            <th className="pb-1 text-right font-medium">Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ranked.map((p) => {
+            const rec = p.plan_id === best?.plan_id;
+            return (
+              <tr key={p.plan_id} className={rec ? 'text-series-mitigated' : 'text-text-secondary'}>
+                <td className="py-1 pr-2">
+                  <div className="truncate">{p.strategy.display_name}</div>
+                  <div className="text-caption text-text-muted">{p.backend_id}</div>
+                </td>
+                <td className="metric py-1 text-right">{fmtSci(p.rmse.value)}</td>
+                <td className="metric py-1 text-right">{money(p.estimated_cost_usd.value)}{rec ? ' ✓' : ''}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {best && (
+        <div className="mt-3 rounded-control border border-border-hairline bg-bg-base p-2.5">
+          <div className="text-eyebrow uppercase text-text-secondary">Verdict</div>
+          <div className="mt-0.5 text-body-s text-text-primary">
+            Run with <span className="text-series-mitigated">{best.strategy.display_name}</span>
+          </div>
+          <div className="text-caption text-text-muted">
+            on {best.backend_id} · computed in your browser from seeded data
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Landing() {
   return (
-    <div className="hx-grain relative min-h-screen overflow-x-hidden bg-bg-base text-text-primary">
+    <div className="marketing relative min-h-screen overflow-x-hidden bg-bg-base text-text-primary">
       <div className="qo-field" aria-hidden />
       <div className="qo-stars" aria-hidden />
       <div className="qo-orbit" style={{ right: -190, top: 80, width: 700, height: 700 }} aria-hidden>
@@ -50,9 +119,31 @@ export function Landing() {
         <span className="qo-orbit-body" />
       </div>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <header className="relative z-20 border-b border-border-hairline/60">
+        <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4" aria-label="Site">
+          <span className="font-display text-[1.35rem]">QRP</span>
+          <div className="hidden items-center gap-6 text-body-s text-text-secondary md:flex">
+            <a href="#workflow" className="hover:text-text-primary">Workflow</a>
+            <a href="#capabilities" className="hover:text-text-primary">Capabilities</a>
+            <a href="#continuum" className="hover:text-text-primary">QEM → QEC</a>
+            <a
+              href="https://github.com/TSS99/quantum-reliability-platform/blob/main/docs/DEMO_VS_REAL.md"
+              target="_blank" rel="noreferrer" className="hover:text-text-primary"
+            >
+              Real vs modelled
+            </a>
+            <a href="https://github.com/TSS99/quantum-reliability-platform" target="_blank" rel="noreferrer" className="hover:text-text-primary">GitHub</a>
+          </div>
+          <Link to="/overview" className="rounded-chip bg-action-bg px-4 py-1.5 text-body-s font-medium text-action-fg">
+            Launch Lab
+          </Link>
+        </nav>
+      </header>
+
+      <main className="relative z-10 mx-auto max-w-6xl px-6 py-16 md:py-20">
         {/* ---------------------------------------------------------- hero */}
-        <section>
+        <section className="grid items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
           <div className="hx-border mb-6 inline-flex items-center gap-2 rounded-chip border border-border-hairline px-3 py-1.5 text-caption text-text-secondary qo-glass">
             <span className="qo-pulse inline-block h-1.5 w-1.5 rounded-full bg-series-mitigated" />
             Interactive prototype · seeded demo data
@@ -95,14 +186,22 @@ export function Landing() {
             </div>
           </Reveal>
 
-          {/* live stat strip */}
+          </div>
+
+          <Reveal as="scale" delay={300}>
+            <HeroAnalysis />
+          </Reveal>
+        </section>
+
+        {/* live stat strip */}
+        <section>
           <Reveal delay={700}>
             <dl className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border-hairline bg-border-hairline sm:grid-cols-4">
               {[
-                { k: 'Strategies compared', v: 7, s: '' },
-                { k: 'Demo backends', v: 3, s: '' },
-                { k: 'QEC grid points', v: 216, s: '' },
-                { k: 'Automated tests', v: 151, s: '' },
+                { k: 'Reliability strategies', v: 7, s: '' },
+                { k: 'Hardware profiles', v: 3, s: '' },
+                { k: 'QEC simulations', v: 216, s: '' },
+                { k: 'Evidence lineage stages', v: 5, s: '' },
               ].map((m) => (
                 <div key={m.k} className="bg-bg-surface/80 px-4 py-5 backdrop-blur-sm">
                   <dd className="metric text-metric-l text-text-primary qo-text-glow">
@@ -128,7 +227,7 @@ export function Landing() {
         </Reveal>
 
         {/* -------------------------------------------------- capabilities */}
-        <section className="mt-24">
+        <section id="capabilities" className="mt-24 scroll-mt-20">
           <Reveal>
             <h2 className="text-eyebrow uppercase text-text-secondary">Four core capabilities</h2>
           </Reveal>
@@ -142,7 +241,7 @@ export function Landing() {
         </section>
 
         {/* ------------------------------------------------------ workflow */}
-        <section id="workflow" className="mt-24 scroll-mt-10">
+        <section id="workflow" className="mt-24 scroll-mt-20">
           <Reveal>
             <h2 className="text-eyebrow uppercase text-text-secondary">How it works</h2>
           </Reveal>
@@ -161,7 +260,7 @@ export function Landing() {
         </section>
 
         {/* ----------------------------------------------------- continuum */}
-        <section className="mt-24">
+        <section id="continuum" className="mt-24 scroll-mt-20">
           <Reveal>
             <h2 className="text-eyebrow uppercase text-text-secondary">The QEM → QEC continuum</h2>
           </Reveal>

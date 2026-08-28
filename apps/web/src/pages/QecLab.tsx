@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { FlaskConical } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { FlaskConical, Target } from 'lucide-react';
+import { fmtSci } from '../components/charts/scale';
 import { Card } from '../components/ui';
 import { ThresholdPlot } from '../components/charts/ThresholdPlot';
 import { thresholdCurves, thresholdSemantics } from '../services/qecGrid';
@@ -38,8 +40,33 @@ export function QecLab() {
   const [code, setCode] = useState<QecCode>('rotated_surface');
   const [noise, setNoise] = useState<QecNoiseModel>('circuit_level');
 
+  // Context handed over from a New Analysis that hit the QEM ceiling, so the user does not have to
+  // re-state their target here. Absent when the lab is opened directly.
+  const [params] = useSearchParams();
+  const carriedTarget = Number(params.get('target')) || null;
+  const carriedP = Number(params.get('p')) || null;
+
   const curves = useMemo(() => thresholdCurves({ code, noise_model: noise, distances: DISTANCES }), [code, noise]);
   const sem = thresholdSemantics(code);
+
+  /** For each distance, the per-round logical error at the grid point nearest the carried p. */
+  const plan = useMemo(() => {
+    if (!carriedTarget || !carriedP) return null;
+    return curves.map((c) => {
+      const near = [...c.rows].sort((a, b) => Math.abs(a.p - carriedP) - Math.abs(b.p - carriedP))[0];
+      const rate = near?.logical_error_rate_per_round ?? null;
+      return {
+        distance: c.distance,
+        qubits: c.physical_qubits,
+        p: near?.p ?? null,
+        rate,
+        meets: rate != null && rate <= carriedTarget,
+        zeroObserved: near?.logical_errors === 0,
+      };
+    });
+  }, [curves, carriedTarget, carriedP]);
+
+  const recommended = plan?.find((d) => d.meets) ?? null;
   const totalRows = curves.reduce((n, c) => n + c.rows.length, 0);
 
   return (
@@ -73,6 +100,63 @@ export function QecLab() {
         </Card>
 
         <div className="flex flex-col gap-3">
+          {plan && carriedTarget && carriedP && (
+            <Card lit className="p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <Target size={15} className="text-series-logical" aria-hidden />
+                <h3 className="text-eyebrow uppercase text-text-secondary">QEC planning — carried from analysis</h3>
+              </div>
+              <p className="text-body-s text-text-secondary">
+                Target <span className="metric text-text-primary">{fmtSci(carriedTarget)}</span> per round at
+                physical error <span className="metric text-text-primary">{fmtSci(carriedP)}</span>.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {plan.map((d) => (
+                  <div
+                    key={d.distance}
+                    className={
+                      'rounded-control border p-2.5 ' +
+                      (d.distance === recommended?.distance
+                        ? 'border-series-logical bg-state-uncertain-bg'
+                        : 'border-border-hairline')
+                    }
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-body-s text-text-primary">d = {d.distance}</span>
+                      <span className={'text-caption ' + (d.meets ? 'text-state-healthy' : 'text-state-warning')}>
+                        {d.meets ? 'target met' : 'predicted miss'}
+                      </span>
+                    </div>
+                    <div className="metric mt-1 text-metric-s text-text-primary">{d.qubits} qubits</div>
+                    <div className="text-caption text-text-muted">
+                      {d.rate == null ? 'no per-round rate' : (d.zeroObserved ? '≤ ' : '') + d.rate.toExponential(1)} / round
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 rounded-control border border-border-hairline bg-bg-base p-2.5 text-body-s">
+                {recommended ? (
+                  <>
+                    <span className="text-text-secondary">Planning point: </span>
+                    <span className="text-series-logical">
+                      rotated surface, distance {recommended.distance} — {recommended.qubits} structural
+                      physical qubits, MWPM decoder.
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-state-warning">
+                    No simulated distance on this grid reaches the target at this physical error.
+                    A lower physical error rate or a larger distance than d=7 would be required.
+                  </span>
+                )}
+              </p>
+              <p className="mt-1.5 text-caption text-text-muted">
+                Planning estimate from simulated grid points — structural qubit counts only, not a
+                fault-tolerance resource calculation.
+              </p>
+            </Card>
+          )}
+
           <ThresholdPlot
             curves={curves}
             summary={

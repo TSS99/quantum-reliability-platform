@@ -272,3 +272,45 @@
 @media (prefers-reduced-motion: reduce) {
   .hx-gradline { animation: none !important; opacity: 1; transform: none; }
 }
+
+
+/* ============================================================================
+   SIGNAL BENCH 2.0 OVERRIDES
+   The hyper effects were applied application-wide. They now apply only on the
+   marketing surface; inside the instrument they are inert. Decoration must not
+   compete with data.
+   ========================================================================= */
+
+/* Rotating conic borders, shine sweeps, tilt and magnetic lift: marketing only. */
+.hx-border::before { content: none; }
+.marketing .hx-border::before { content: ''; }
+
+.hx-shine::after { content: none; }
+.marketing .hx-shine::after { content: ''; }
+
+.hx-tilt { transform: none !important; transform-style: flat; }
+.hx-tilt-inner { transform: none; }
+.marketing .hx-tilt { transform-style: preserve-3d; }
+.marketing .hx-tilt-inner { transform: translateZ(22px); }
+
+.hx-mag:hover { transform: none; box-shadow: none; }
+.marketing .hx-mag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgb(var(--glow-cyan) / 0.35), 0 10px 34px -14px rgb(var(--glow-cyan) / 0.45);
+}
+
+/* Cursor spotlight is a genuinely useful pointer affordance on dense tables —
+   keep it, but far quieter than the marketing version. */
+.hx-spot::before { background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--glow-cyan) / 0.06), transparent 60%); }
+.marketing .hx-spot::before { background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--glow-cyan) / 0.14), transparent 62%); }
+
+/* Ambient loops retired in the app. */
+.hx-beam::after { animation: none; opacity: 0; }
+.marketing .hx-beam::after { animation: hx-travel 3.4s var(--ease-in-out-quant) infinite; opacity: 1; }
+
+.hx-breathe { animation: none; }
+.marketing .hx-breathe { animation: hx-breathe 5.5s var(--ease-in-out-quant) infinite; }
+
+.hx-scan::before { content: none; }
+.hx-char { animation: none; opacity: 1; transform: none; }
+.marketing .hx-char { animation: hx-char-in 0.72s var(--ease-out-quant) both; }

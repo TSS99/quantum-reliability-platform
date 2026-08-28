@@ -56,7 +56,7 @@ export function Hardware() {
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-4 p-4 sm:flex-row">
             <div className="flex flex-col items-center">
-              <CouplingMap profile={b} size={180} summary={b.display_name + ' connectivity: ' + b.qubit_count + ' qubits, ' + b.coupling_map.length + ' couplers'} />
+              <CouplingMap profile={b} size={210} detailed summary={b.display_name + ' reliability map: ' + b.qubit_count + ' qubits, ' + b.coupling_map.length + ' couplers, coloured by absolute error bands'} />
               <div className="mt-1 text-caption text-text-muted">{b.topology_class}</div>
             </div>
             <div className="min-w-0 flex-1">

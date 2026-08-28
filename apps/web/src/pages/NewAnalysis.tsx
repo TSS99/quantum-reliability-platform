@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Cpu, Zap, ShieldCheck, Ban, TriangleAlert, HelpCircle } from 'lucide-react';
 import { Card, ExplainedScore } from '../components/ui';
+import { Rail } from '../components/Rail';
 import { ParetoFront } from '../components/charts/ParetoFront';
+import { QecEscalation } from '../components/QecEscalation';
 import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
 import { DEFAULT_GOAL, optimize, paretoFront, preflight } from '../services/demoEngine';
 import type { PriorityPreset, PreflightStatus } from '../services/contracts';
@@ -32,6 +34,7 @@ export function NewAnalysis() {
   // A circuit without a declared estimand has no defined error, so we require one.
   const [taskType, setTaskType] = useState<'observable' | 'sampling'>('observable');
   const [observable, setObservable] = useState('ZZ');
+  const [paretoAxis, setParetoAxis] = useState<'cost' | 'runtime' | 'shots'>('cost');
 
   const workload = WORKLOADS.find((w) => w.workload_id === workloadId)!;
 
@@ -75,6 +78,21 @@ export function NewAnalysis() {
           seeded demo data. Illustrative, not a hardware measurement.
         </p>
       </header>
+
+      {/* The stage rail reflects the ACTUAL state of this analysis, so the page tells the whole
+          story without the user navigating elsewhere. */}
+      <Card className="px-4 py-3">
+        <Rail
+          states={{
+            circuit: custom?.error ? 'blocked' : 'complete',
+            hardware: 'complete',
+            noise: 'complete',
+            strategy: result.plans.length ? 'complete' : 'pending',
+            execution: verdict?.status === 'DO_NOT_RUN' ? 'blocked' : recommended ? 'active' : 'pending',
+            verification: 'pending',
+          }}
+        />
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-4">
@@ -228,7 +246,7 @@ export function NewAnalysis() {
           </Card>
 
           <Card className="p-4">
-            <h3 className="mb-2 text-eyebrow uppercase text-text-secondary">2 · Circuit analysis</h3>
+            <h3 className="mb-2 text-eyebrow uppercase text-text-secondary">2 · Circuit structure</h3>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-body-s">
               {([
                 ['qubits', profile.qubit_count],
@@ -309,7 +327,7 @@ export function NewAnalysis() {
         <div className="flex flex-col gap-4">
           <Card className="p-4">
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-eyebrow uppercase text-text-secondary">4 · Cost vs error — Pareto explorer</h3>
+              <h3 className="text-eyebrow uppercase text-text-secondary">5 · Compare strategies — cost vs error</h3>
               <span className="text-caption text-text-muted">
                 {result.plans.filter((p) => p.feasibility === 'feasible').length} feasible · {pareto.size} optimal
               </span>
@@ -318,6 +336,11 @@ export function NewAnalysis() {
               plans={result.plans}
               paretoIds={pareto}
               recommendedId={result.recommended_plan_id}
+              maxCostUsd={DEFAULT_GOAL.max_cost_usd}
+              maxRuntimeSeconds={DEFAULT_GOAL.max_runtime_seconds}
+              targetError={targetError}
+              axis={paretoAxis}
+              onAxisChange={setParetoAxis}
               summary={
                 'Cost versus expected error for ' +
                 result.plans.length +
@@ -331,6 +354,7 @@ export function NewAnalysis() {
           </Card>
 
           <div className={'rounded-card border border-border-hairline p-4 ' + st.bg}>
+            <div className="mb-1.5 text-eyebrow uppercase text-text-secondary">6 · Decision</div>
             <div className="flex items-center gap-2">
               <st.Icon className={st.fg} size={18} aria-hidden />
               <span className={'text-heading-m ' + st.fg}>{st.label}</span>
@@ -370,8 +394,19 @@ export function NewAnalysis() {
             )}
           </div>
 
+          {recommended && recommended.rmse.value > targetError && (
+            <QecEscalation
+              bestRmse={recommended.rmse.value}
+              targetError={targetError}
+              physicalErrorRate={
+                CALIBRATIONS[recommended.backend_id]?.history.at(-1)?.two_qubit_error_rate.value ?? 0.01
+              }
+              backendId={recommended.backend_id}
+            />
+          )}
+
           <Card className="overflow-hidden p-0">
-            <div className="border-b border-border-hairline px-4 py-2 text-eyebrow uppercase text-text-secondary">Candidate strategies</div>
+            <div className="border-b border-border-hairline px-4 py-2 text-eyebrow uppercase text-text-secondary">7 · Candidate strategies &amp; why they ranked</div>
             <div className="overflow-x-auto">
               <table className="w-full text-body-s">
                 <thead>
