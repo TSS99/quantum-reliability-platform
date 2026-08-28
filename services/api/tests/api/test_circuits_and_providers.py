@@ -100,3 +100,26 @@ def test_ibm_endpoints_503_rather_than_fabricate():
         assert r.json()["detail"]["code"] in ("CREDENTIALS_MISSING", "DEPENDENCY_MISSING")
     else:
         assert r.json()["provenance"] == "measured"
+
+
+def test_the_two_parsers_agree():
+    """The browser mirrors the Python fallback, and the fallback must match qiskit.
+
+    CI runs without qiskit, so a drift here silently changes what a user's circuit is judged on —
+    exactly the bug this test was written for (the fallback once miscounted a whole-register
+    `measure q -> c;` as a single measurement).
+    """
+    from app.circuits.qasm import _parse_fallback
+
+    for src in (BELL, GHZ4):
+        fallback = _parse_fallback(src, "2")
+        try:
+            authoritative = parse_qasm(src)
+        except Exception:  # pragma: no cover - qiskit absent, nothing to compare against
+            continue
+        if authoritative.parser != "qiskit":
+            continue
+        assert fallback.qubit_count == authoritative.qubit_count
+        assert fallback.measurement_count == authoritative.measurement_count
+        assert fallback.two_qubit_gate_count == authoritative.two_qubit_gate_count
+        assert fallback.single_qubit_gate_count == authoritative.single_qubit_gate_count
