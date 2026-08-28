@@ -13,7 +13,7 @@ export function Card({ as: Tag = 'div', className = '', lit, interactive, childr
       className={
         'relative rounded-card qo-glass ' +
         (lit ? 'qo-lit ' : '') +
-        (interactive ? 'qo-hover ' : '') +
+        (interactive ? 'qo-hover hx-spot hx-border ' : '') +
         className
       }
       {...props}

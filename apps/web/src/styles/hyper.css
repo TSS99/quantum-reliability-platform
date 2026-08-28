@@ -1,0 +1,274 @@
+/* ============================================================================
+   HYPER — the high-energy motion layer.
+   Animated conic borders, shine sweeps, magnetic buttons, 3D tilt, beams,
+   scroll reveals, grain. Everything is transform/opacity/filter driven and
+   every effect collapses under prefers-reduced-motion.
+   ========================================================================= */
+
+/* ------------------------------------------------------- scroll reveal */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition:
+    opacity 0.85s var(--ease-out-quant),
+    transform 0.85s var(--ease-out-quant);
+  transition-delay: var(--d, 0ms);
+  will-change: transform, opacity;
+}
+[data-reveal='left'] { transform: translate3d(-30px, 0, 0); }
+[data-reveal='right'] { transform: translate3d(30px, 0, 0); }
+[data-reveal='scale'] { transform: scale(0.94); }
+[data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* --------------------------------------------------- animated borders */
+
+/* A conic gradient that rotates around the panel edge — the "powered rail". */
+@property --hx-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.hx-border {
+  position: relative;
+  isolation: isolate;
+}
+.hx-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--hx-angle),
+    transparent 0deg,
+    rgb(var(--glow-cyan) / 0.9) 40deg,
+    rgb(var(--glow-violet) / 0.7) 90deg,
+    transparent 150deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: hx-spin 6s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+.hx-border:hover::before,
+.hx-border.is-live::before {
+  opacity: 1;
+}
+@keyframes hx-spin {
+  to { --hx-angle: 360deg; }
+}
+
+/* ------------------------------------------------------- shine sweep */
+
+.hx-shine {
+  position: relative;
+  overflow: hidden;
+}
+.hx-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.16) 48%,
+    rgb(var(--glow-cyan) / 0.22) 52%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.85s var(--ease-out-quant);
+  pointer-events: none;
+}
+.hx-shine:hover::after {
+  transform: translateX(130%);
+}
+
+/* --------------------------------------------------- cursor spotlight */
+
+/* Cards light up where the pointer is. --mx/--my are set in JS as percentages. */
+.hx-spot {
+  position: relative;
+}
+.hx-spot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(var(--glow-cyan) / 0.14),
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.hx-spot:hover::before {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------ 3D tilt */
+
+.hx-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.35s var(--ease-out-quant);
+  will-change: transform;
+}
+.hx-tilt-inner {
+  transform: translateZ(28px);
+}
+
+/* -------------------------------------------------------------- beams */
+
+/* A light pulse travelling along a horizontal rule — signal in transit. */
+.hx-beam {
+  position: relative;
+  overflow: hidden;
+}
+.hx-beam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgb(var(--glow-cyan) / 0.95), transparent);
+  filter: blur(0.5px);
+  animation: hx-travel 3.4s var(--ease-in-out-quant) infinite;
+}
+@keyframes hx-travel {
+  0% { transform: translateX(-120%); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateX(420%); opacity: 0; }
+}
+
+/* ------------------------------------------------------ magnetic glow */
+
+.hx-mag {
+  position: relative;
+  transition: transform 0.28s var(--ease-out-quant), box-shadow 0.28s var(--ease-out-quant);
+}
+.hx-mag:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow:
+    0 0 0 1px rgb(var(--glow-cyan) / 0.4),
+    0 10px 40px -12px rgb(var(--glow-cyan) / 0.55);
+}
+.hx-mag:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ------------------------------------------------- kinetic text reveal */
+
+.hx-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 0.7em, 0) rotateX(-40deg);
+  animation: hx-char-in 0.72s var(--ease-out-quant) both;
+  animation-delay: calc(var(--ci, 0) * 26ms);
+}
+@keyframes hx-char-in {
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------- ambience+ */
+
+/* Fine film grain — kills banding on the big gradients and adds texture. */
+.hx-grain::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: hx-grain-shift 900ms steps(3) infinite;
+}
+@keyframes hx-grain-shift {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-3%, 2%); }
+  66% { transform: translate(2%, -3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Slow breathing glow for hero anchors. */
+.hx-breathe {
+  animation: hx-breathe 5.5s var(--ease-in-out-quant) infinite;
+}
+@keyframes hx-breathe {
+  0%, 100% { filter: drop-shadow(0 0 14px rgb(var(--glow-cyan) / 0.35)); }
+  50% { filter: drop-shadow(0 0 30px rgb(var(--glow-cyan) / 0.65)); }
+}
+
+/* Scanning line that crosses a panel once on reveal. */
+.hx-scan::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  top: 0;
+  background: linear-gradient(90deg, transparent, rgb(var(--glow-cyan) / 0.8), transparent);
+  transform: translateY(0);
+  animation: hx-scan 2.4s var(--ease-in-out-quant) 0.3s both;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes hx-scan {
+  to { transform: translateY(var(--scan-h, 300px)); opacity: 0; }
+}
+
+/* ------------------------------------------------------ reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .hx-border::before,
+  .hx-beam::after,
+  .hx-grain::after,
+  .hx-breathe,
+  .hx-scan::before,
+  .hx-char {
+    animation: none !important;
+  }
+  .hx-char { opacity: 1; transform: none; }
+  .hx-shine::after { display: none; }
+  .hx-tilt { transform: none !important; }
+  .hx-mag:hover { transform: none; }
+}
+
+/* Gradient headline line: revealed as a block (per-char spans cannot carry a clipped
+   background), with the fill drifting so the light appears to move through the letters. */
+.hx-gradline {
+  display: inline-block;
+  background-size: 220% 100%;
+  animation:
+    hx-gradline-in 0.9s var(--ease-out-quant) 0.45s both,
+    hx-gradflow 9s var(--ease-in-out-quant) 1.4s infinite;
+}
+@keyframes hx-gradline-in {
+  from { opacity: 0; transform: translate3d(0, 0.35em, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hx-gradflow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hx-gradline { animation: none !important; opacity: 1; transform: none; }
+}

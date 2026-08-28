@@ -7,6 +7,7 @@ import { CouplingMap } from '../components/charts/CouplingMap';
 import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
 import { DEFAULT_GOAL, optimize } from '../services/demoEngine';
 import { fmtSci, money } from '../components/charts/scale';
+import { Reveal, CountUp } from '../components/motion';
 
 // Overview: a live-feeling operational dashboard. Every figure is derived client-side from the
 // seeded demo engine — illustrative, never a hardware measurement.
@@ -31,7 +32,7 @@ export function Overview() {
             New analysis <ArrowRight size={14} aria-hidden />
           </Link>
         </div>
-        <Card lit className="overflow-hidden p-5 qo-sweep">
+        <Card lit className="hx-border hx-scan overflow-hidden p-5 qo-sweep" style={{ ['--scan-h' as string]: '150px' }}>
           <Rail states={{ circuit: 'complete', hardware: 'complete', noise: 'active' }} />
         </Card>
       </section>
@@ -49,12 +50,12 @@ export function Overview() {
         />
         <Card interactive className="qo-rise p-5" style={{ ['--i' as string]: 1 }}>
           <div className="text-eyebrow uppercase text-text-secondary">Goal pass rate</div>
-          <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow">{passRate}%</div>
+          <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow"><CountUp to={passRate} suffix="%" /></div>
           <div className="text-caption text-text-muted">of demo workloads have a feasible recommended strategy</div>
         </Card>
         <Card interactive className="qo-rise p-5" style={{ ['--i' as string]: 2 }}>
           <div className="text-eyebrow uppercase text-text-secondary">Demo backends</div>
-          <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow">{BACKENDS.length}</div>
+          <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow"><CountUp to={BACKENDS.length} /></div>
           <div className="text-caption text-text-muted">superconducting + ion-trap profiles (simulated calibration)</div>
         </Card>
       </div>
@@ -63,7 +64,7 @@ export function Overview() {
         <h2 id="hw-h" className="mb-2 text-eyebrow uppercase text-text-secondary">Active hardware profiles</h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {BACKENDS.map((b, i) => (
-            <Card key={b.backend_id} interactive className="qo-rise flex gap-3 p-4" style={{ ['--i' as string]: i }}>
+            <Reveal key={b.backend_id} delay={i * 80}><Card interactive className="flex h-full gap-3 p-4">
               <CouplingMap profile={b} size={92} summary={b.display_name + ' qubit connectivity, ' + b.qubit_count + ' qubits'} />
               <div className="min-w-0">
                 <div className="truncate text-body-s font-medium text-text-primary">{b.display_name}</div>
@@ -74,7 +75,7 @@ export function Overview() {
                   <div className="flex justify-between gap-2"><dt className="text-text-muted">readout</dt><dd className="metric text-text-primary">{fmtSci(b.median_readout_error_rate.value)}</dd></div>
                 </dl>
               </div>
-            </Card>
+            </Card></Reveal>
           ))}
         </div>
       </section>
