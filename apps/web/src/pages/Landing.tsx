@@ -110,6 +110,21 @@ function HeroAnalysis() {
 export function Landing() {
   return (
     <div className="marketing relative min-h-screen overflow-x-hidden bg-bg-base text-text-primary">
+      {/* Hero plate. The photograph carries the product's own motifs — a noisy trace resolving into
+          a clean signal on the left, a coupling lattice on the right — so it reinforces the brand
+          rather than decorating it. Scrims keep body copy at full contrast over the bright metal;
+          if the file is absent the section degrades to the plain instrument ground. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(92vh,860px)]" aria-hidden>
+        <div
+          className="absolute inset-0 bg-cover bg-right bg-no-repeat"
+          style={{ backgroundImage: 'var(--hero-image)' }}
+        />
+        {/* left-to-right scrim: text side stays legible, hardware side stays visible */}
+        <div className="absolute inset-0 bg-gradient-to-r from-bg-base via-bg-base/85 to-bg-base/25" />
+        {/* bottom fade into the page */}
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-bg-base" />
+      </div>
+
       <div className="qo-field" aria-hidden />
       <div className="qo-stars" aria-hidden />
       <div className="qo-orbit" style={{ right: -190, top: 80, width: 700, height: 700 }} aria-hidden>

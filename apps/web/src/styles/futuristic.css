@@ -28,6 +28,8 @@
    the grotesk, which is what a dense instrument should read as. */
 .marketing {
   --font-display: 'Instrument Serif', Georgia, serif;
+  /* Drop the hero photograph at apps/web/public/hero.jpg. Unset -> no image, page still works. */
+  --hero-image: url('/hero.jpg');
 }
 
 /* ---------------------------------------------------------------- ambience */
