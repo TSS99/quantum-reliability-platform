@@ -12,8 +12,11 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from app.circuits.qasm import CircuitParseError, parse_qasm
 from app.optimization import Candidate, optimize
 from app.providers.demo import PLANNED_ADAPTERS, provider
+from app.providers.ibm import IBMUnavailable
+from app.providers.ibm import provider as ibm
 from app.qec.config import SimulationConfig
 from app.qec.errors import QecConfigError
 from app.schemas.goal import ReliabilityGoal
@@ -172,3 +175,62 @@ def qec_simulate(req: QecSimulateRequest) -> dict:
         return run_simulation(SimulationConfig(**req.model_dump()))
     except QecConfigError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+# ------------------------------------------------------- circuits (Tier 2: your own circuit)
+
+
+class QasmRequest(BaseModel):
+    """A user-supplied OpenQASM 2 or 3 circuit. Limits are enforced by the parser, not here."""
+
+    qasm: str = Field(min_length=1)
+
+
+@router.post("/circuits/parse", tags=["circuits"])
+def parse_circuit(req: QasmRequest) -> dict:
+    """Parse a real circuit into the profile the optimizer consumes.
+
+    Rejects oversized or unsupported input with a structured reason code — the caller can map it
+    straight onto the shared preflight vocabulary.
+    """
+    try:
+        return parse_qasm(req.qasm).to_dict()
+    except CircuitParseError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": exc.code, "message": str(exc), **exc.detail},
+        ) from exc
+
+
+# ------------------------------------------------ real hardware (Tier 1: read-only calibration)
+
+
+@router.get("/providers", tags=["hardware"])
+def providers() -> dict:
+    """Which adapters can actually serve data right now, and why not when they cannot."""
+    return {
+        "providers": [
+            {"provider_id": "demo", "available": True, "adapter_status": "demo_support",
+             "reason": None},
+            ibm.status() | {"adapter_status": ibm.adapter_status},
+        ],
+        "planned_adapters": list(PLANNED_ADAPTERS),
+    }
+
+
+@router.get("/providers/ibm/backends", tags=["hardware"])
+def ibm_backends() -> dict:
+    """Live IBM Quantum backends. 503 (never a fabricated list) when unavailable."""
+    try:
+        return {"backends": ibm.list_backends(), "provenance": "measured"}
+    except IBMUnavailable as exc:
+        raise HTTPException(status_code=503, detail={"code": exc.code, "message": str(exc)}) from exc
+
+
+@router.get("/providers/ibm/backends/{backend_id}/calibration", tags=["hardware"])
+def ibm_calibration(backend_id: str) -> dict:
+    """Real measured calibration: T1/T2, readout error, per-coupler two-qubit error."""
+    try:
+        return ibm.get_calibration(backend_id)
+    except IBMUnavailable as exc:
+        raise HTTPException(status_code=503, detail={"code": exc.code, "message": str(exc)}) from exc

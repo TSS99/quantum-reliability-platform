@@ -43,3 +43,7 @@ npm-debug.log*
 # Installed agent skills (third-party, not product code)
 .agents/
 .claude/
+
+# graphify working files (the graph itself IS committed)
+graphify-out/.graphify_*
+graphify-out/cost.json
