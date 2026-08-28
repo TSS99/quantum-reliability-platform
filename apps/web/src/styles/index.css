@@ -1,5 +1,6 @@
 @import './tokens.css';
 @import './futuristic.css';
+@import './hyper.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
