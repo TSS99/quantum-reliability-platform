@@ -34,8 +34,14 @@ See [`docs/QA_AUDIT.md`](docs/QA_AUDIT.md), [`docs/ARCHITECTURE.md`](docs/ARCHIT
 [`docs/MISSION.md`](docs/MISSION.md), and [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Quality
-~150 automated tests, 0 known vulnerabilities: **132** backend `pytest` · **14** frontend Vitest ·
-**5** Playwright E2E (flows A–D) · `npm audit` clean · CSP-enforced, no secrets in the bundle.
+~160 automated tests, 0 known vulnerabilities: **140** backend `pytest` · **14** frontend Vitest ·
+**6** Playwright E2E (flows A–D + regression) · `npm audit` clean · CSP-enforced, no secrets in the bundle.
+
+## Local API
+The FastAPI backend exposes the engines over REST (local only — Pages is static by design):
+`GET /health`, `GET /api/v1/backends[/{id}[/calibration]]`, `POST /api/v1/circuits/analyze`,
+`POST /api/v1/strategies/optimize`, `POST /api/v1/preflight`, `POST /api/v1/qec/simulate`.
+Interactive docs at `/docs`. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Repository layout
 - `apps/web/` — React + TypeScript (strict) + Vite + Tailwind frontend (the deployable prototype)
