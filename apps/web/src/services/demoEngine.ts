@@ -52,6 +52,7 @@ export const PRESET_WEIGHTS: Record<string, Record<string, number>> = {
 
 export const DEFAULT_GOAL: ReliabilityGoal = {
   target_error: 0.02,
+  task: { type: 'observable', metric: 'absolute_expectation_error', observable: 'ZZ' },
   statistical_confidence: 0.95,
   max_cost_usd: 80,
   max_runtime_seconds: 600,
@@ -363,6 +364,26 @@ export function optimize(
   goal: ReliabilityGoal,
   shots = DEFAULT_SHOTS,
 ): OptimizeResponse {
+  // The whole cost/error model below is expectation-value specific: `rmse` is an absolute error on
+  // a normalised observable, and families such as ZNE only make sense against one. A sampling task
+  // is measured by total variation distance, which this engine does not model. Refuse it here
+  // rather than let it fall through and produce a confident, meaningless number.
+  if (goal.task.type !== 'observable') {
+    return {
+      plans: [],
+      recommended_plan_id: null,
+      weights: {},
+      normalization_ref: 'n/a',
+      seed: 0,
+      unsupported: {
+        code: 'TASK_TYPE_UNSUPPORTED',
+        message:
+          'Sampling-distribution analysis is not implemented. The optimizer models absolute error ' +
+          'on an observable; scoring a distribution task with that model would be meaningless.',
+      },
+    };
+  }
+
   const plans: ExecutionPlan[] = [];
   for (const backend of backends) {
     const calibration = calibrations[backend.backend_id];

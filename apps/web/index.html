@@ -2,10 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- RECON-30: Pages can't set response headers, so CSP is enforced via meta tag. -->
+    <!-- RECON-30: Pages can't set response headers, so CSP is enforced via meta tag.
+
+         connect-src is an explicit ALLOWLIST, not a convenience. Two reasons:
+         (1) it was previously absent, so it inherited default-src 'self' and the browser blocked
+             every call to the backend no matter what the server's CORS said;
+         (2) this page can hold a user's IBM token, so `connect-src https:` would be reckless —
+             it would let any injected script post that credential to any host. Adding a
+             deployment means adding it here, on purpose. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none';"
+      content="default-src 'self'; connect-src 'self' https://qrp-api.onrender.com http://localhost:8000 http://127.0.0.1:8000; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none';"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

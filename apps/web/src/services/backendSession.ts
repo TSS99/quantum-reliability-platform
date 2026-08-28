@@ -15,6 +15,31 @@
 
 const ENDPOINT_KEY = 'qrp.backend.endpoint';
 
+/**
+ * Origins the page is permitted to talk to.
+ *
+ * This MIRRORS the `connect-src` allowlist in index.html and exists only to produce a good error:
+ * the CSP is the actual enforcement, and the browser will refuse anything not on that list whether
+ * or not this check runs. Keeping a copy here means a user who types their own URL is told why it
+ * will not work, instead of watching a request fail as "unreachable".
+ *
+ * The allowlist is also the trust boundary for the credential: this page can hold an IBM token, so
+ * the set of hosts it may post to is a deliberate, reviewable list rather than "any https host".
+ */
+export const ALLOWED_ORIGINS = [
+  'https://qrp-api.onrender.com',
+  'http://localhost:8000',
+  'http://127.0.0.1:8000',
+] as const;
+
+export function isAllowedEndpoint(url: string): boolean {
+  try {
+    return ALLOWED_ORIGINS.includes(new URL(url).origin as (typeof ALLOWED_ORIGINS)[number]);
+  } catch {
+    return false;
+  }
+}
+
 /** In-memory only, by design. Never persisted. */
 let ibmToken: string | null = null;
 
@@ -79,6 +104,15 @@ export class BackendError extends Error implements ApiError {
 export async function api<T>(path: string, init?: RequestInit & { sendToken?: boolean }): Promise<T> {
   const base = endpoint;
   if (!base) throw new BackendError('No backend endpoint is configured.', 'NO_ENDPOINT', 0);
+  if (!isAllowedEndpoint(base)) {
+    // Refuse before the request rather than letting the CSP reject it as an opaque network error.
+    throw new BackendError(
+      `${base} is not on this build's connect-src allowlist, so the browser will not let this page ` +
+        'contact it. Allowed: ' + ALLOWED_ORIGINS.join(', ') + '.',
+      'ENDPOINT_NOT_ALLOWED',
+      0,
+    );
+  }
 
   const headers = new Headers(init?.headers);
   if (init?.body) headers.set('Content-Type', 'application/json');

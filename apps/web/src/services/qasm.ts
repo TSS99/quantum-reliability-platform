@@ -272,3 +272,30 @@ export function toCircuitProfile(p: ParsedCircuit, calibration: CalibrationSnaps
   const budget = errorBudget(base, calibration);
   return { ...base, estimated_raw_error: q(Number(budget.bias.toFixed(4)), 'expectation_value', 'heuristic') };
 }
+
+/**
+ * Validate a Pauli observable against a circuit width.
+ *
+ * The observable was previously free text that nothing read — a user could type `ABCDEF` on a
+ * 2-qubit circuit and the analysis would proceed as though it meant something. It still does not
+ * influence the noise model (the predictor is structural), but it DOES define the metric the target
+ * is reported in, so it must at least be a well-formed Pauli string of the right length.
+ */
+export function validateObservable(
+  observable: string,
+  qubitCount: number,
+): { ok: true } | { ok: false; reason: string } {
+  const trimmed = observable.trim().toUpperCase();
+  if (!trimmed) return { ok: false, reason: 'Enter a Pauli observable, e.g. ZZ.' };
+  if (!/^[IXYZ]+$/.test(trimmed)) {
+    const bad = [...new Set([...trimmed].filter((ch) => !'IXYZ'.includes(ch)))].join(', ');
+    return { ok: false, reason: `Only I, X, Y and Z are Pauli symbols — found ${bad}.` };
+  }
+  if (trimmed.length !== qubitCount) {
+    return {
+      ok: false,
+      reason: `${trimmed.length} symbols for a ${qubitCount}-qubit circuit — it needs exactly ${qubitCount}.`,
+    };
+  }
+  return { ok: true };
+}

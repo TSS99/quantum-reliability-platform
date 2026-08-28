@@ -3,10 +3,12 @@ import { Sun, Moon, Database, Server, KeyRound, ShieldCheck, Loader2 } from 'luc
 import { Card } from '../components/ui';
 import { useTheme } from '../app/useTheme';
 import {
+  ALLOWED_ORIGINS,
   backend,
   clearToken,
   getEndpoint,
   hasToken,
+  isAllowedEndpoint,
   setEndpoint,
   setToken,
   type ExecutionPolicy,
@@ -56,7 +58,10 @@ export function Settings() {
             <Server size={14} className="text-series-mitigated" aria-hidden /> Backend endpoint
           </div>
           <p className="mt-1 text-caption text-text-muted">
-            A QRP API instance. Leave empty to stay fully offline on seeded demo data.
+            A QRP API instance. Leave empty to stay fully offline on seeded demo data. This page can
+            hold your provider credential, so it may only contact hosts on a fixed allowlist —{' '}
+            <span className="metric">{ALLOWED_ORIGINS.join(', ')}</span>. Anything else is blocked by
+            the page&rsquo;s own Content-Security-Policy.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <input
@@ -69,7 +74,7 @@ export function Settings() {
             />
             <button
               onClick={connect}
-              disabled={probe.state === 'checking'}
+              disabled={probe.state === 'checking' || (url.trim() !== '' && !isAllowedEndpoint(url))}
               className="inline-flex items-center gap-1.5 rounded-control border border-border-control px-3 py-2 text-body-s text-text-secondary hover:bg-row-hover disabled:opacity-60"
             >
               {probe.state === 'checking' && <Loader2 size={14} className="animate-spin" aria-hidden />}
@@ -104,6 +109,11 @@ export function Settings() {
                 {probe.policy.job_durability.replace(/_/g, '-')}
               </div>
             </dl>
+          )}
+          {url.trim() !== '' && !isAllowedEndpoint(url) && (
+            <p className="mt-2 text-caption text-state-warning">
+              Not on the allowlist — this build cannot contact that host.
+            </p>
           )}
           {probe.state === 'error' && (
             <p className="mt-3 rounded-control border border-state-critical/30 bg-bg-base p-3 text-caption text-text-secondary">
@@ -160,6 +170,15 @@ export function Settings() {
             {tokenHeld ? 'A token is held for this tab.' : 'No token held.'} Nothing is persisted to
             disk.
           </p>
+          {tokenHeld && (
+            <p className="mt-1 text-caption text-text-muted">
+              It will be sent to{' '}
+              <span className="metric text-text-secondary">
+                {getEndpoint() ? new URL(getEndpoint()!).host : 'no endpoint configured'}
+              </span>{' '}
+              — and only when you submit a job or read provider data, never on a health check.
+            </p>
+          )}
         </div>
 
         {/* ------------------------------------------------------------ display */}

@@ -160,9 +160,26 @@ export interface CalibrationSnapshot {
 
 export type PriorityPreset = 'minimize_cost' | 'balanced' | 'maximize_accuracy' | 'custom';
 
+/**
+ * WHAT is being estimated. This is not cosmetic: it decides which error metric the target is
+ * expressed in, and therefore which strategies can even be considered. An expectation-value
+ * technique like ZNE has no meaning for a sampling task, so the two cannot share a scoring model.
+ */
+export type TaskType = 'observable' | 'sampling';
+
+export interface TaskSpec {
+  type: TaskType;
+  /** The metric `target_error` is measured in. */
+  metric: 'absolute_expectation_error' | 'total_variation_distance';
+  /** Pauli string, one symbol per qubit. Null for sampling tasks. */
+  observable: string | null;
+}
+
 export interface ReliabilityGoal {
   /** Absolute error on a normalized observable <O> in [-1, 1] (RECON-10). */
   target_error: number;
+  /** What is being estimated. The optimizer refuses a task it has no model for. */
+  task: TaskSpec;
   statistical_confidence: number;
   max_cost_usd: number;
   max_runtime_seconds: number;
@@ -242,6 +259,12 @@ export interface OptimizeResponse {
   weights: Record<string, number>;
   normalization_ref: string;
   seed: number;
+  /**
+   * Set when the optimizer declined to answer. Present rather than returning plans from a model
+   * that does not apply — silently scoring a sampling task with an expectation-value model would
+   * be worse than refusing, because the UI implies the distinction is enforced.
+   */
+  unsupported?: { code: string; message: string };
 }
 
 // ---------------------------------------------------------------- experiments

@@ -4,8 +4,9 @@ import { FlaskConical, Target } from 'lucide-react';
 import { fmtSci } from '../components/charts/scale';
 import { Card } from '../components/ui';
 import { ThresholdPlot } from '../components/charts/ThresholdPlot';
-import { thresholdCurves, thresholdSemantics } from '../services/qecGrid';
+import { lookupPoint, thresholdCurves, thresholdSemantics } from '../services/qecGrid';
 import type { QecCode, QecNoiseModel } from '../services/contracts';
+import { logicalBudget, verdictFor, VERDICT_LABEL } from '../services/qecBudget';
 
 const CODES: { id: QecCode; label: string }[] = [
   { id: 'repetition', label: 'Repetition' },
@@ -45,28 +46,57 @@ export function QecLab() {
   const [params] = useSearchParams();
   const carriedTarget = Number(params.get('target')) || null;
   const carriedP = Number(params.get('p')) || null;
+  // Circuit shape travels with the target: without it the observable error cannot be converted
+  // into a per-round logical budget at all (see services/qecBudget).
+  const carriedQubits = Number(params.get('nq')) || null;
+  const carriedDepth = Number(params.get('depth')) || null;
 
   const curves = useMemo(() => thresholdCurves({ code, noise_model: noise, distances: DISTANCES }), [code, noise]);
   const sem = thresholdSemantics(code);
 
-  /** For each distance, the per-round logical error at the grid point nearest the carried p. */
+  /**
+   * Convert the carried QEM target into a per-round logical budget before comparing anything.
+   * The two quantities are not interchangeable, which is what the old code assumed.
+   */
+  const budget = useMemo(() => {
+    if (!carriedTarget || !carriedQubits || !carriedDepth) return null;
+    return logicalBudget({
+      targetObservableError: carriedTarget,
+      logicalQubits: carriedQubits,
+      logicalDepth: carriedDepth,
+      // d rounds per logical layer for a distance-d code; the largest distance is the planning case.
+      roundsPerLayer: Math.max(...DISTANCES),
+    });
+  }, [carriedTarget, carriedQubits, carriedDepth]);
+
+  /**
+   * Per distance: the grid point AT the carried physical error, or an explicit off-grid report.
+   * `lookupPoint` exists precisely so nothing silently substitutes a neighbouring simulation, and
+   * this page used to do exactly that behind the user's back.
+   */
   const plan = useMemo(() => {
-    if (!carriedTarget || !carriedP) return null;
+    if (!budget || !carriedP) return null;
     return curves.map((c) => {
-      const near = [...c.rows].sort((a, b) => Math.abs(a.p - carriedP) - Math.abs(b.p - carriedP))[0];
-      const rate = near?.logical_error_rate_per_round ?? null;
+      const hit = lookupPoint(code, noise, c.distance, carriedP);
+      const row = hit.row;
+      const rate = row?.logical_error_rate_per_round ?? null;
       return {
         distance: c.distance,
         qubits: c.physical_qubits,
-        p: near?.p ?? null,
+        gridStatus: hit.grid_status,
+        nearestP: hit.nearest_p,
+        p: row?.p ?? null,
         rate,
-        meets: rate != null && rate <= carriedTarget,
-        zeroObserved: near?.logical_errors === 0,
+        upper: row?.lerpr_ci_high ?? null,
+        verdict: verdictFor(rate, row?.lerpr_ci_high ?? null, budget.perRoundBudget),
+        zeroObserved: row?.logical_errors === 0,
       };
     });
-  }, [curves, carriedTarget, carriedP]);
+  }, [curves, budget, carriedP, code, noise]);
 
-  const recommended = plan?.find((d) => d.meets) ?? null;
+  const offGrid = plan?.some((d) => d.gridStatus === 'off_grid') ?? false;
+  // Only a verdict backed by the confidence bound may be recommended.
+  const recommended = plan?.find((d) => d.verdict === 'meets') ?? null;
   const totalRows = curves.reduce((n, c) => n + c.rows.length, 0);
 
   return (
@@ -100,16 +130,37 @@ export function QecLab() {
         </Card>
 
         <div className="flex flex-col gap-3">
-          {plan && carriedTarget && carriedP && (
+          {plan && budget && carriedTarget && carriedP && (
             <Card lit className="p-4">
               <div className="mb-2 flex items-center gap-2">
                 <Target size={15} className="text-series-logical" aria-hidden />
                 <h3 className="text-eyebrow uppercase text-text-secondary">QEC planning — carried from analysis</h3>
               </div>
               <p className="text-body-s text-text-secondary">
-                Target <span className="metric text-text-primary">{fmtSci(carriedTarget)}</span> per round at
-                physical error <span className="metric text-text-primary">{fmtSci(carriedP)}</span>.
+                The analysis target is an absolute error on ⟨O⟩, not a logical error rate. It is
+                converted into a per-round budget before anything is compared:
               </p>
+              <ol className="mt-2 rounded-control border border-border-hairline bg-bg-base p-2.5 text-caption text-text-secondary">
+                {budget.steps.map((step) => (
+                  <li key={step} className="metric py-0.5">
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-2 text-body-s text-text-secondary">
+                Required{' '}
+                <span className="metric text-text-primary">{fmtSci(budget.perRoundBudget)}</span> per
+                round at physical error{' '}
+                <span className="metric text-text-primary">{fmtSci(carriedP)}</span>.
+              </p>
+
+              {offGrid && (
+                <p className="mt-2 rounded-control border border-state-uncertain/40 bg-state-uncertain-bg p-2.5 text-caption text-text-secondary">
+                  <span className="metric text-state-uncertain">off grid</span> — the carried
+                  physical error rate was not simulated. Nothing is substituted for it; each card
+                  below names the nearest simulated point instead of quietly answering with it.
+                </p>
+              )}
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 {plan.map((d) => (
                   <div
@@ -121,16 +172,41 @@ export function QecLab() {
                         : 'border-border-hairline')
                     }
                   >
-                    <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline justify-between gap-2">
                       <span className="text-body-s text-text-primary">d = {d.distance}</span>
-                      <span className={'text-caption ' + (d.meets ? 'text-state-healthy' : 'text-state-warning')}>
-                        {d.meets ? 'target met' : 'predicted miss'}
+                      <span
+                        className={
+                          'text-caption ' +
+                          (d.verdict === 'meets'
+                            ? 'text-state-healthy'
+                            : d.verdict === 'likely'
+                              ? 'text-state-uncertain'
+                              : 'text-state-warning')
+                        }
+                      >
+                        {d.gridStatus === 'off_grid' ? 'not simulated' : VERDICT_LABEL[d.verdict]}
                       </span>
                     </div>
                     <div className="metric mt-1 text-metric-s text-text-primary">{d.qubits} qubits</div>
-                    <div className="text-caption text-text-muted">
-                      {d.rate == null ? 'no per-round rate' : (d.zeroObserved ? '≤ ' : '') + d.rate.toExponential(1)} / round
-                    </div>
+                    {d.gridStatus === 'off_grid' ? (
+                      <div className="text-caption text-text-muted">
+                        nearest simulated p ={' '}
+                        <span className="metric">{d.nearestP == null ? '—' : fmtSci(d.nearestP)}</span>
+                      </div>
+                    ) : (
+                      <div className="text-caption text-text-muted">
+                        {d.rate == null
+                          ? 'no per-round rate'
+                          : (d.zeroObserved ? '0 failures · ' : '') + d.rate.toExponential(1)}{' '}
+                        / round
+                        {d.upper != null && (
+                          <>
+                            {' '}
+                            · 95% upper <span className="metric">{d.upper.toExponential(1)}</span>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -139,14 +215,16 @@ export function QecLab() {
                   <>
                     <span className="text-text-secondary">Planning point: </span>
                     <span className="text-series-logical">
-                      rotated surface, distance {recommended.distance} — {recommended.qubits} structural
-                      physical qubits, MWPM decoder.
+                      {CODES.find((c) => c.id === code)?.label ?? code}, distance{' '}
+                      {recommended.distance} — {recommended.qubits} structural physical qubits, MWPM
+                      decoder.
                     </span>
                   </>
                 ) : (
                   <span className="text-state-warning">
-                    No simulated distance on this grid reaches the target at this physical error.
-                    A lower physical error rate or a larger distance than d=7 would be required.
+                    No simulated distance clears the per-round budget with 95% confidence at this
+                    physical error. A lower physical error rate, a larger distance than d=
+                    {Math.max(...DISTANCES)}, or more simulation statistics would be required.
                   </span>
                 )}
               </p>
