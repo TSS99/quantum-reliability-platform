@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import type { ExecutionPlan } from '../../services/contracts';
 import { linScale, logScale, money, fmtSci } from './scale';
+import { DrawPath, PopIn } from '../fx';
 
 export type ParetoAxis = 'cost' | 'runtime' | 'shots';
 
@@ -133,14 +134,18 @@ export function ParetoFront({
         <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} stroke="var(--color-border-hairline)" />
 
         {frontier.length > 1 && (
-          <path
+          // Drawing the frontier in cost order shows the trade-off being traced, and ends in
+          // exactly the state a static render would produce.
+          <DrawPath
+            key={axis}
             d={frontier.map((p, i) => `${i ? 'L' : 'M'}${sx(xOf(p)).toFixed(1)},${sy(p.rmse.value).toFixed(1)}`).join(' ')}
+            duration={0.9}
             fill="none" stroke="var(--color-series-mitigated)" strokeWidth={1.5} strokeDasharray="4 3"
             clipPath={`url(#${clip})`}
           />
         )}
 
-        {feas.map((p) => {
+        {feas.map((p, i) => {
           const on = paretoIds.has(p.plan_id);
           const rec = p.plan_id === recommendedId;
           const hv = p.plan_id === active;
@@ -149,6 +154,7 @@ export function ParetoFront({
           const lo = sy(Math.max(p.rmse.value * 0.75, 1e-9)), hi = sy(p.rmse.value * 1.25);
           return (
             <g key={p.plan_id} clipPath={`url(#${clip})`}>
+              <PopIn delay={0.45 + i * 0.035}>
               {on && <line x1={cx} x2={cx} y1={hi} y2={lo} stroke="var(--color-series-mitigated)" strokeWidth={1} opacity={0.45} />}
               <g
                 role="button"
@@ -169,6 +175,7 @@ export function ParetoFront({
                 {rec && <circle cx={cx} cy={cy} r={hv ? 10 : 8} fill="none" stroke="var(--color-focus-outer)" strokeWidth={2} />}
                 {marker(p.strategy.strategy_id, cx, cy, hv ? 6 : on ? 5 : 3.5)}
               </g>
+              </PopIn>
             </g>
           );
         })}

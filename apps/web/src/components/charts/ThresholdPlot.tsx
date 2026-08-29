@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { ThresholdCurve } from '../../services/qecGrid';
 import { logScale, decades, fmtSci } from './scale';
+import { DrawPath } from '../fx';
 
 const SERIES = ['var(--color-series-mitigated)', 'var(--color-series-logical)', 'var(--color-state-warning)'];
 
@@ -119,13 +120,17 @@ export function ThresholdPlot({ curves, summary, height = 340 }: ThresholdPlotPr
           return (
             <g key={s.distance} clipPath={`url(#${clip})`}>
               {band && <path d={band} fill={col} opacity={0.13} />}
-              <path
+              {/* Was a CSS keyframe, which runs regardless of the user's reduced-motion setting.
+                  DrawPath honours it and finishes in the same static state. Distances draw in
+                  order so the curves separate visibly rather than appearing at once. */}
+              <DrawPath
                 d={line}
+                duration={0.95}
+                delay={i * 0.16}
                 fill="none"
                 stroke={col}
                 strokeWidth={2}
                 strokeLinejoin="round"
-                style={{ animation: 'qrp-draw .9s var(--ease-out-quant, ease) both' }}
               />
               {s.pts.map((d) =>
                 d.bound ? (

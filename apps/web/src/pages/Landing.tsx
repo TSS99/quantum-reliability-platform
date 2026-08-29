@@ -4,6 +4,19 @@ import { ArrowRight, Activity, Gauge, ShieldCheck, Layers, Sparkles } from 'luci
 import { Rail } from '../components/Rail';
 import { HeroScene } from '../components/HeroScene';
 import { Reveal, CountUp, useTilt } from '../components/motion';
+import { motion } from 'framer-motion';
+import {
+  AnimatedNumber,
+  Magnetic,
+  Reveal as FxReveal,
+  RevealItem,
+  ScrollProgress,
+  Spotlight,
+  fadeUp,
+  scaleIn,
+  useParallax,
+  useScrollFade,
+} from '../components/fx';
 import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
 import { DEFAULT_GOAL, optimize } from '../services/demoEngine';
 import { fmtSci, money } from '../components/charts/scale';
@@ -122,12 +135,21 @@ function HeroAnalysis() {
 }
 
 export function Landing() {
+  // The plate sits behind the type, so it drifts LESS than the content in front of it — that is
+  // what reads as depth. Both are no-ops under prefers-reduced-motion.
+  const plateY = useParallax(90);
+  const plateFade = useScrollFade(200, 700);
+
   return (
     <div className="marketing relative min-h-screen overflow-x-hidden bg-bg-base text-text-primary">
       {/* Hero plate. The scene is drawn, not photographed — see HeroScene for why. A photograph can
           still be layered over it by pointing --hero-image at a file; unset, only the scene shows.
           Scrims below keep body copy at full contrast whichever is in play. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(92vh,860px)]" aria-hidden>
+      <motion.div
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(92vh,860px)]"
+        style={{ y: plateY, opacity: plateFade }}
+        aria-hidden
+      >
         <div className="absolute inset-0"><HeroScene /></div>
         <div
           className="absolute inset-0 bg-cover bg-right bg-no-repeat"
@@ -137,8 +159,9 @@ export function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-bg-base via-bg-base/80 to-bg-base/10" />
         {/* bottom fade into the page */}
         <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-bg-base" />
-      </div>
+      </motion.div>
 
+      <ScrollProgress />
       <div className="qo-field" aria-hidden />
       <div className="qo-stars" aria-hidden />
       <div className="qo-orbit" style={{ right: -190, top: 80, width: 700, height: 700 }} aria-hidden>
@@ -198,13 +221,17 @@ export function Landing() {
 
           <Reveal delay={560}>
             <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link
-                to="/overview"
-                className="hx-mag hx-shine hx-border group inline-flex items-center gap-2 rounded-chip bg-action-bg px-7 py-3.5 text-body-s font-semibold text-action-fg"
-              >
-                Launch Reliability Lab
-                <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
-              </Link>
+              {/* Magnetic is marketing-only: interaction that carries no data meaning has no place
+                  inside the application, but on a landing page it is exactly the point. */}
+              <Magnetic strength={0.22}>
+                <Link
+                  to="/overview"
+                  className="hx-shine hx-border group inline-flex items-center gap-2 rounded-chip bg-action-bg px-7 py-3.5 text-body-s font-semibold text-action-fg"
+                >
+                  Launch Reliability Lab
+                  <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
+                </Link>
+              </Magnetic>
               <button
                 type="button"
                 onClick={scrollToWorkflow}
@@ -234,7 +261,7 @@ export function Landing() {
               ].map((m) => (
                 <div key={m.k} className="bg-bg-surface/80 px-4 py-5 backdrop-blur-sm">
                   <dd className="metric text-metric-l text-text-primary qo-text-glow">
-                    <CountUp to={m.v} suffix={m.s} />
+                    <AnimatedNumber to={m.v} suffix={m.s} />
                   </dd>
                   <dt className="mt-0.5 text-caption text-text-muted">{m.k}</dt>
                 </div>
@@ -261,7 +288,10 @@ export function Landing() {
             </p>
           </Reveal>
 
-          <div className="mt-8 grid gap-px overflow-hidden rounded-card border border-border-hairline bg-border-hairline md:grid-cols-3">
+          <FxReveal
+            stagger={0.1}
+            className="mt-8 grid gap-px overflow-hidden rounded-card border border-border-hairline bg-border-hairline md:grid-cols-3"
+          >
             {[
               {
                 t: 'Noise is not a constant',
@@ -275,15 +305,15 @@ export function Landing() {
                 t: 'Mitigation has a floor',
                 d: 'Past a certain target, no amount of sampling helps — you need error correction, more qubits and syndrome rounds. Knowing where that line sits is the decision.',
               },
-            ].map((c, i) => (
-              <Reveal key={c.t} delay={i * 90}>
+            ].map((c) => (
+              <RevealItem key={c.t} className="h-full">
                 <div className="h-full bg-bg-surface/80 p-5 backdrop-blur-sm">
                   <h3 className="text-heading-m text-text-primary">{c.t}</h3>
                   <p className="mt-2 text-body-s text-text-secondary">{c.d}</p>
                 </div>
-              </Reveal>
+              </RevealItem>
             ))}
-          </div>
+          </FxReveal>
         </section>
 
         {/* ----------------------------------------------------- the approach */}
@@ -295,7 +325,7 @@ export function Landing() {
             </p>
           </Reveal>
 
-          <Reveal delay={120}>
+          <FxReveal stagger={0.08} delay={0.1}>
             <ol className="mt-8 grid gap-px overflow-hidden rounded-card border border-border-hairline bg-border-hairline sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { n: '01', t: 'Read the circuit', d: 'Structure, two-qubit weight, idle exposure, dynamic features — parsed from your OpenQASM, not assumed.' },
@@ -303,14 +333,18 @@ export function Landing() {
                 { n: '03', t: 'Rank the options', d: 'Every eligible strategy scored on predicted error, cost and runtime, with the ones your constraints rule out shown as ruled out.' },
                 { n: '04', t: 'Keep the evidence', d: 'What was predicted, what was observed, and on which calibration — so the claim survives someone checking it.' },
               ].map((st) => (
-                <li key={st.n} className="bg-bg-surface/80 p-5 backdrop-blur-sm">
+                <motion.li
+                  key={st.n}
+                  variants={fadeUp}
+                  className="bg-bg-surface/80 p-5 backdrop-blur-sm"
+                >
                   <span className="metric text-caption text-series-mitigated">{st.n}</span>
                   <h3 className="mt-1.5 text-heading-m text-text-primary">{st.t}</h3>
                   <p className="mt-1.5 text-body-s text-text-secondary">{st.d}</p>
-                </li>
+                </motion.li>
               ))}
             </ol>
-          </Reveal>
+          </FxReveal>
 
           <Reveal delay={200}>
             <p className="mt-6 max-w-2xl text-body-s text-text-muted">
@@ -397,6 +431,7 @@ export function Landing() {
         {/* ----------------------------------------------------- final cta */}
         <Reveal as="scale" className="mt-24">
           <section className="hx-border hx-shine relative overflow-hidden rounded-card p-10 text-center qo-glass">
+            <Spotlight />
             <h2 className="font-display text-display-m font-normal">See it decide</h2>
             <p className="mx-auto mt-3 max-w-xl text-body-s text-text-secondary">
               Pick a workload, set a reliability goal, and watch the optimizer rule strategies in — or out.
