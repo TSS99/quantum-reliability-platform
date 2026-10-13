@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Activity, Gauge, ShieldCheck, Layers, Sparkles } from 'lucide-react';
 import { Rail } from '../components/Rail';
 import { HeroScene } from '../components/HeroScene';
-import { Reveal, CountUp, useTilt } from '../components/motion';
+import { Reveal, useTilt } from '../components/motion';
 import { motion } from 'framer-motion';
 import {
   AnimatedNumber,
@@ -13,7 +13,6 @@ import {
   ScrollProgress,
   Spotlight,
   fadeUp,
-  scaleIn,
   useParallax,
   useScrollFade,
 } from '../components/fx';
