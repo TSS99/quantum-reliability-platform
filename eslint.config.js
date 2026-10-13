@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/playwright-report/**',
       '**/test-results/**',
       'packages/contracts/src/generated/**',
+      '.agents/**',
     ],
   },
   js.configs.recommended,
