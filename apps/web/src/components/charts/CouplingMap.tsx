@@ -86,7 +86,7 @@ export function CouplingMap({ profile, summary, size = 180, detailed = false, me
       )}
 
       <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} role="img" aria-label={summary} className="text-border-control">
-        {profile.coupling_map.map((e, i) => {
+        {profile.coupling_map.map((e) => {
           const a = profile.qubits.find((q) => q.qubit === e.control);
           const b = profile.qubits.find((q) => q.qubit === e.target);
           if (!a || !b) return null;
