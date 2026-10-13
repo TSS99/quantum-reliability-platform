@@ -165,7 +165,7 @@ export function parseQasm(source: string): ParsedCircuit {
   const busy = one + 2 * two + 3 * multi;
   const idle = Math.max(0, 1 - busy / Math.max(depth * qubits, 1));
 
-  const controlFlow = /(for|while|switch|case|if)\s*[({]/.test(body);
+  const controlFlow = /\b(for|while|switch|case|if)\b\s*[({]/.test(body);
   const dynamicUncertain = controlFlow || unknown.size > 0;
 
   const warnings = ['Depth is approximated (no scheduler in the browser); install the backend for an exact profile.'];
