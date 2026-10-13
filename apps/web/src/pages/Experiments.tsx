@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Receipt as ReceiptIcon, Copy, Check } from 'lucide-react';
-import { Card, StatusBadge, SeriesTag } from '../components/ui';
+import { Card, SeriesTag } from '../components/ui';
 import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
 import { DEFAULT_GOAL, optimize } from '../services/demoEngine';
 import type { ExecutionPlan } from '../services/contracts';
@@ -98,7 +98,16 @@ export function Experiments() {
               <tbody>
                 {runs.map((r) => (
                   <tr key={r.runId} onClick={() => setSel(r.runId)}
-                    className={'cursor-pointer border-t border-border-hairline hover:bg-row-hover ' + (r.runId === sel ? 'bg-row-selected' : '')}>
+                    tabIndex={0}
+                    role="button"
+                    aria-pressed={r.runId === sel}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSel(r.runId);
+                      }
+                    }}
+                    className={'cursor-pointer border-t border-border-hairline hover:bg-row-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-series-mitigated ' + (r.runId === sel ? 'bg-row-selected' : '')}>
                     <td className="metric px-4 py-2 text-caption text-text-muted">{r.runId}</td>
                     <td className="px-4 py-2 text-text-primary">{r.workloadName}</td>
                     <td className="px-4 py-2 text-text-secondary">{r.plan.backend_id}</td>
