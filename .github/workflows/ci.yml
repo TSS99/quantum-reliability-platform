@@ -41,6 +41,18 @@ jobs:
       - run: ruff check .
       - run: pytest -q
 
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e services/api
+      - run: python scripts/generate_contracts.py
+      - name: fail if packages/contracts is stale
+        run: git diff --exit-code -- packages/contracts
+
   security:
     runs-on: ubuntu-latest
     steps:
