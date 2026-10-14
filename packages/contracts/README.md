@@ -7,4 +7,6 @@ TypeScript types and Zod schemas for the QRP API contract.
 are generated and committed. CI checks them for staleness. To change the contract, edit the Pydantic
 models and regenerate — never edit generated output by hand.
 
-_Generator wiring lands with the first real endpoints (Phase 3)._
+Regenerate with `python scripts/generate_contracts.py` from the repo root. It writes `openapi.json`
+(the raw schema) and `src/generated.ts` (TS interfaces + Zod schemas); `src/index.ts` re-exports it.
+CI runs the same script and fails the build on `git diff` (.github/workflows/ci.yml).
