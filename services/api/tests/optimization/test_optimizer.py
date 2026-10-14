@@ -1,6 +1,6 @@
 """Phase-7 optimizer: the properties that matter (RECON-19/20/21)."""
 from app.optimization import Candidate, optimize, score, weights_for
-from app.schemas.goal import ReliabilityGoal
+from app.schemas.goal import ReliabilityGoal, TaskSpec
 from app.schemas.quantity import Quantity
 
 
@@ -11,6 +11,7 @@ def q(value: float, unit: str) -> Quantity:
 def goal(priority: str = "balanced", *, max_cost: float = 80.0, max_runtime: float = 600.0, target_error: float = 0.02) -> ReliabilityGoal:
     return ReliabilityGoal(
         target_error=q(target_error, "expectation_value"),
+        task=TaskSpec(type="observable", metric="absolute_expectation_error", observable="ZZ"),
         confidence_target=0.95,
         max_cost_usd=q(max_cost, "usd"),
         max_runtime_seconds=q(max_runtime, "seconds"),

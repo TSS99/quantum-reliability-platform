@@ -176,6 +176,7 @@ def score_weights_kwargs(**overrides) -> dict:
 def reliability_goal_kwargs(**overrides) -> dict:
     kwargs = dict(
         target_error=quantity_kwargs(value=0.05, unit="expectation_value", method_ref="TEST#target"),
+        task=dict(type="observable", metric="absolute_expectation_error", observable="ZZ"),
         confidence_target=0.95,
         max_cost_usd=quantity_kwargs(value=10.0, unit="usd", method_ref="TEST#cost"),
         max_runtime_seconds=quantity_kwargs(value=60.0, unit="seconds", method_ref="TEST#time"),
