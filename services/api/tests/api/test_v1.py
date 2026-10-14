@@ -10,6 +10,7 @@ def _goal(max_cost: float = 80.0, target_error: float = 0.02) -> dict:
     q = lambda v, u: {"value": v, "unit": u, "provenance": "demo_fixture", "method_ref": "TEST"}  # noqa: E731
     return {
         "target_error": q(target_error, "expectation_value"),
+        "task": {"type": "observable", "metric": "absolute_expectation_error", "observable": "ZZ"},
         "confidence_target": 0.95,
         "max_cost_usd": q(max_cost, "usd"),
         "max_runtime_seconds": q(600.0, "seconds"),

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.domain.invariants import check_quantity
 
@@ -31,6 +31,8 @@ Provenance = Literal[
 
 
 class Quantity(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     value: float
     unit: Unit
     provenance: Provenance

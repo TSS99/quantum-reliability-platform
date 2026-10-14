@@ -127,13 +127,16 @@ def _plan_json(s) -> dict:
 def optimize_strategies(req: OptimizeRequest) -> dict:
     """Two-stage optimizer: hard-constraint pre-filter, then a fixed-range weighted score."""
     res = _run(req)
-    return {
+    out = {
         "recommended_candidate_id": res.recommended_id,
         "weights": res.weights.model_dump(),
         "explanation": res.explanation,
         "ranked": [_plan_json(s) for s in res.ranked],
         "infeasible": [_plan_json(s) for s in res.infeasible],
     }
+    if res.unsupported is not None:
+        out["unsupported"] = {"code": res.unsupported.code, "message": res.unsupported.message}
+    return out
 
 
 @router.post("/preflight", tags=["optimizer"])

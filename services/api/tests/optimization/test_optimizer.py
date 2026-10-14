@@ -1,6 +1,6 @@
 """Phase-7 optimizer: the properties that matter (RECON-19/20/21)."""
 from app.optimization import Candidate, optimize, score, weights_for
-from app.schemas.goal import ReliabilityGoal
+from app.schemas.goal import ReliabilityGoal, TaskSpec
 from app.schemas.quantity import Quantity
 
 
@@ -11,6 +11,7 @@ def q(value: float, unit: str) -> Quantity:
 def goal(priority: str = "balanced", *, max_cost: float = 80.0, max_runtime: float = 600.0, target_error: float = 0.02) -> ReliabilityGoal:
     return ReliabilityGoal(
         target_error=q(target_error, "expectation_value"),
+        task=TaskSpec(type="observable", metric="absolute_expectation_error", observable="ZZ"),
         confidence_target=0.95,
         max_cost_usd=q(max_cost, "usd"),
         max_runtime_seconds=q(max_runtime, "seconds"),
@@ -76,3 +77,17 @@ def test_warning_when_target_missed_but_feasible():
     res = optimize([cand("a", cost=10, rmse=0.10)], goal(target_error=0.02))
     assert res.recommended_id == "a"  # still the best available
     assert res.preflight_status == "RUN_WITH_WARNING"
+
+
+def test_sampling_task_is_refused_not_scored():
+    # A sampling task has no meaning under the expectation-value model (rmse on a normalized
+    # observable) — the optimizer must refuse it with TASK_TYPE_UNSUPPORTED, mirroring the
+    # frontend's demoEngine.optimize(), rather than silently scoring it.
+    sampling_goal = goal().model_copy(update={
+        "task": TaskSpec(type="sampling", metric="total_variation_distance", observable=None),
+    })
+    res = optimize([cand("a", cost=10, rmse=0.02)], sampling_goal)
+    assert res.recommended_id is None
+    assert res.ranked == []
+    assert res.unsupported is not None
+    assert res.unsupported.code == "TASK_TYPE_UNSUPPORTED"
