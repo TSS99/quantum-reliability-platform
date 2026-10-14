@@ -53,6 +53,7 @@ class OptimizeResult:
     preflight_summary: str
     explanation: str = ""
     infeasible: list[Scored] = field(default_factory=list)
+    unsupported: Finding | None = None
 
 
 def stage_a_findings(c: Candidate, goal: ReliabilityGoal) -> list[Finding]:
@@ -93,6 +94,21 @@ def score(c: Candidate, goal: ReliabilityGoal, w: ScoreWeights) -> ScoreBreakdow
 
 
 def optimize(candidates: list[Candidate], goal: ReliabilityGoal) -> OptimizeResult:
+    if goal.task.type != "observable":
+        # The scoring model below is expectation-value specific (rmse is absolute error on a
+        # normalized observable). A sampling task is measured by total variation distance, which
+        # this engine does not model — refuse rather than score it with the wrong model (mirrors
+        # apps/web/src/services/demoEngine.ts optimize()).
+        unsupported = Finding(
+            code="TASK_TYPE_UNSUPPORTED", severity="blocking", subject="goal", subject_id=None,
+            message="Sampling-distribution analysis is not implemented. The optimizer models absolute "
+                    "error on an observable; scoring a distribution task with that model would be meaningless.",
+            evidence={},
+        )
+        return OptimizeResult(ranked=[], recommended_id=None, weights=weights_for(goal),
+                              preflight_status="DO_NOT_RUN", preflight_summary=unsupported.message,
+                              explanation="", infeasible=[], unsupported=unsupported)
+
     w = weights_for(goal)
     scored: list[Scored] = []
     for c in candidates:

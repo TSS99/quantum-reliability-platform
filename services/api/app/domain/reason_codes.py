@@ -18,6 +18,7 @@ ReasonCode = Literal[
     "UNSUPPORTED_CIRCUIT_FEATURE",
     "QEC_CAPABILITY_MISSING",
     "INSUFFICIENT_CALIBRATION_DATA",
+    "TASK_TYPE_UNSUPPORTED",
 ]
 
 Severity = Literal["blocking", "warning", "insufficient_data"]
