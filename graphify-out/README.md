@@ -1,6 +1,6 @@
 # Knowledge graph
 
-A navigable map of this repository — **1242 nodes, 2276 edges, 100 communities** — built by
+A navigable map of this repository — **1620 nodes, 2844 edges, 103 communities** — built by
 [graphify](https://github.com/safishamsi/graphify) from the code (AST) and the docs (semantic
 extraction).
 
