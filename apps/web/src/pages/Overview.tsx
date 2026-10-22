@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { Card, ExplainedScore, StatusBadge, SeriesTag } from '../components/ui';
+import { Card, StatusBadge, SeriesTag } from '../components/ui';
 import { Rail } from '../components/Rail';
 import { CouplingMap } from '../components/charts/CouplingMap';
 import { WORKLOADS, CIRCUIT_PROFILES, BACKENDS, CALIBRATIONS } from '../services/demoFixtures';
@@ -37,17 +37,7 @@ export function Overview() {
         </Card>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <ExplainedScore
-          label="Reliability Health (illustrative)"
-          value={0.72}
-          formula="w1·calibration + w2·strategy_fit + w3·feasibility"
-          terms={[
-            { label: 'Calibration validity', weight: 0.4, contribution: 0.34 },
-            { label: 'Strategy fit', weight: 0.35, contribution: 0.26 },
-            { label: 'Goal feasibility', weight: 0.25, contribution: 0.12 },
-          ]}
-        />
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card interactive className="qo-rise p-5" style={{ ['--i' as string]: 1 }}>
           <div className="text-eyebrow uppercase text-text-secondary">Goal pass rate</div>
           <div className="mt-1 metric text-metric-xl text-text-primary qo-text-glow"><CountUp to={passRate} suffix="%" /></div>
