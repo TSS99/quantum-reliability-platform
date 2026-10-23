@@ -62,7 +62,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm audit --audit-level=high
+      # Fails on any high/critical advisory except the documented allowlist in the script.
+      - run: npm audit --json | node scripts/npm-audit-check.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
